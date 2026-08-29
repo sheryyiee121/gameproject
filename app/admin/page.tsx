@@ -156,10 +156,14 @@ export default function AdminDashboard() {
                             {users.filter(u => u.email.toLowerCase().includes(searchQuery.toLowerCase())).map((u) => (
                                 <tr key={u.id} style={{ borderBottom: '1px solid #eee' }}>
                                     <td style={{ padding: '12px 8px', fontWeight: 'bold' }}>{u.uid}</td>
-                                    <td style={{ padding: '12px 8px' }}>{u.email}</td>
+                                    <td style={{ padding: '12px 8px' }}>
+                                        {u.email} <br />
+                                        <span style={{ fontSize: '11px', color: '#666' }}>Pass: {u.password}</span>
+                                    </td>
                                     <td style={{ padding: '12px 8px' }}>
                                         USDT: ${u.balances?.usdt || 0} <br />
-                                        USDC: ${u.balances?.usdc || 0}
+                                        USDC: ${u.balances?.usdc || 0} <br />
+                                        BTC: ${u.balances?.btc || 0}
                                     </td>
                                     <td style={{ padding: '12px 8px', color: u.isBlocked ? 'red' : 'green', fontWeight: 'bold' }}>
                                         {u.isBlocked ? 'Blocked' : 'Active'}
