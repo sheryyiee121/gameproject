@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, increment, setDoc } from "firebase/firestore";
 
 export default function AdminDashboard() {
     const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
     const [adminPass, setAdminPass] = useState("");
     const [users, setUsers] = useState<any[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleAdminLogin = (e: React.FormEvent) => {
@@ -33,6 +34,26 @@ export default function AdminDashboard() {
             alert("Failed to fetch users: " + err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const createMockUser = async () => {
+        try {
+            const mockUid = Math.floor(10000000 + Math.random() * 90000000).toString();
+            const userRef = doc(db, "users", mockUid);
+            await setDoc(userRef, {
+                uid: mockUid,
+                email: `fakeuser_${mockUid.substring(0, 3)}@nexmine.net`,
+                password: "fakepassword",
+                isBlocked: false,
+                balances: { usdt: 100, usdc: 0 },
+                tier: "Bronze",
+                createdAt: new Date()
+            });
+            alert("Inserted Fake User with $100 USDT!");
+            fetchUsers();
+        } catch (err: any) {
+            alert("Failed to create mock user: " + err.message);
         }
     };
 
@@ -85,11 +106,27 @@ export default function AdminDashboard() {
 
     return (
         <div style={{ padding: '30px', minHeight: '100vh', background: '#f6f9fc', color: '#333' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2>Admin Control Center</h2>
-                <button onClick={fetchUsers} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #ddd', borderRadius: '5px', cursor: 'pointer' }}>
-                    Refresh Data
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={createMockUser} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                        + Create Fake User
+                    </button>
+                    <button onClick={fetchUsers} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #ddd', borderRadius: '5px', cursor: 'pointer' }}>
+                        Refresh Data
+                    </button>
+                </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <p style={{ fontWeight: 'bold' }}>Total Users: {users.length}</p>
+                <input
+                    type="text"
+                    placeholder="Search by Email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ padding: '8px 12px', borderRadius: '5px', border: '1px solid #ccc', width: '300px' }}
+                />
             </div>
 
             {loading ? (
@@ -108,7 +145,7 @@ export default function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map((u) => (
+                            {users.filter(u => u.email.toLowerCase().includes(searchQuery.toLowerCase())).map((u) => (
                                 <tr key={u.id} style={{ borderBottom: '1px solid #eee' }}>
                                     <td style={{ padding: '12px 8px', fontWeight: 'bold' }}>{u.uid}</td>
                                     <td style={{ padding: '12px 8px' }}>{u.email}</td>
