@@ -57,7 +57,15 @@ export default function AdminDashboard() {
         }
     };
 
-    const modifyBalance = async (uid: string, token: 'usdt' | 'usdc', amount: number, isAdding: boolean) => {
+    const modifyBalance = async (uid: string, token: 'usdt' | 'usdc', defaultAmount: number, isAdding: boolean) => {
+        const inputAmount = window.prompt(`Enter amount of ${token.toUpperCase()} to ${isAdding ? 'ADD' : 'DEDUCT'}:`, defaultAmount.toString());
+        if (!inputAmount) return;
+        const amount = parseFloat(inputAmount);
+        if (isNaN(amount) || amount <= 0) {
+            alert("Invalid amount!");
+            return;
+        }
+
         const finalAmount = isAdding ? amount : -amount;
         try {
             const userRef = doc(db, "users", uid);
@@ -160,15 +168,15 @@ export default function AdminDashboard() {
                                         <div style={{ display: 'flex', gap: '8px' }}>
                                             <button
                                                 onClick={() => modifyBalance(u.id, 'usdt', 50, true)}
-                                                style={{ padding: '6px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                                style={{ padding: '6px 10px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
                                             >
-                                                + $50
+                                                Add (Prompt)
                                             </button>
                                             <button
                                                 onClick={() => modifyBalance(u.id, 'usdt', 50, false)}
-                                                style={{ padding: '6px 12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                                style={{ padding: '6px 10px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
                                             >
-                                                - $50
+                                                Ded (Prompt)
                                             </button>
                                         </div>
                                     </td>
