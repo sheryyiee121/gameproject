@@ -1,69 +1,438 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+
+export default function SignUpPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  const handleSendCode = () => {
+    if (!email) return;
+    setCodeSent(true);
+    setCountdown(60);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setCodeSent(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert("Registration submitted!");
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="signup-root">
+      {/* Top bar */}
+      <div className="top-bar">
+        <button className="back-btn" aria-label="Go back">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <button className="lang-btn" aria-label="Language">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Hero section */}
+      <div className="hero">
+        <div className="coins-img" aria-hidden="true">
+          <span className="coin coin-left">💰</span>
+          <span className="coin coin-center">🪙</span>
+          <span className="coin coin-right">💵</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+        <h1 className="hero-title">
+          <span className="gold">$10,000</span> New User Rewards
+        </h1>
+        <div className="timer-row">
+          <span className="timer-icon">⏱</span>
+          <span className="timer-text">Ends In 00:00:00</span>
+        </div>
+      </div>
+
+      {/* Form */}
+      <form className="signup-form" onSubmit={handleRegister} noValidate>
+        {/* Email */}
+        <div className="field-group">
+          <label className="field-label" htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            className="field-input"
+            placeholder="Please enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+          />
+        </div>
+
+        {/* Password */}
+        <div className="field-group">
+          <label className="field-label" htmlFor="password">Password</label>
+          <div className="input-wrapper">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              className="field-input"
+              placeholder="Please enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              required
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <button
+              type="button"
+              className="eye-btn"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20C7 20 2.73 16.39 1 12a10.07 10.07 0 012.06-3.94M9.9 4.24A9.12 9.12 0 0112 4c5 0 9.27 3.61 11 8a10.07 10.07 0 01-1.35 2.71" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
-      </main>
+
+        {/* Verification Code */}
+        <div className="field-group">
+          <label className="field-label" htmlFor="verificationCode">Verification Code</label>
+          <div className="input-wrapper">
+            <input
+              id="verificationCode"
+              type="text"
+              className="field-input"
+              placeholder="Please enter the email verification code"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+            />
+            <button
+              type="button"
+              className="send-code-btn"
+              onClick={handleSendCode}
+              disabled={codeSent || !email}
+            >
+              {codeSent ? `Resend (${countdown}s)` : "Send Verification Code"}
+            </button>
+          </div>
+        </div>
+
+        {/* Invitation Code */}
+        <div className="field-group">
+          <label className="field-label" htmlFor="invitationCode">Invitation Code</label>
+          <div className="input-wrapper">
+            <input
+              id="invitationCode"
+              type="text"
+              className="field-input"
+              placeholder="Please enter the invitation code"
+              value={invitationCode}
+              onChange={(e) => setInvitationCode(e.target.value)}
+            />
+            {invitationCode && (
+              <button
+                type="button"
+                className="clear-btn"
+                onClick={() => setInvitationCode("")}
+                aria-label="Clear invitation code"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Register button */}
+        <button type="submit" className="register-btn">Register</button>
+
+        {/* Terms */}
+        <p className="terms-text">
+          Registering Means That I Agree To SaxAi{" "}
+          <a href="#" className="terms-link">Service Agreement</a>
+          {" "}And{" "}
+          <a href="#" className="terms-link">Privacy Policy</a>
+        </p>
+
+        {/* Login link */}
+        <p className="login-text">
+          Already Have An Account?{" "}
+          <a href="/login" className="login-link">Log In Now</a>
+        </p>
+      </form>
+
+      {/* Help button */}
+      <button className="help-btn" aria-label="Need help?">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+        </svg>
+      </button>
+
+      <style jsx>{`
+        .signup-root {
+          min-height: 100vh;
+          width: 100%;
+          background: linear-gradient(180deg, #0a1a3a 0%, #0d2251 40%, #0a2040 100%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          color: #fff;
+          padding-bottom: 40px;
+          box-sizing: border-box;
+        }
+
+        .top-bar {
+          width: 100%;
+          max-width: 480px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          box-sizing: border-box;
+        }
+        .back-btn, .lang-btn {
+          background: none;
+          border: none;
+          color: #fff;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          transition: background 0.2s;
+        }
+        .back-btn:hover, .lang-btn:hover {
+          background: rgba(255,255,255,0.1);
+        }
+
+        .hero {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 8px 20px 24px;
+          text-align: center;
+        }
+        .coins-img {
+          font-size: 40px;
+          margin-bottom: 12px;
+          display: flex;
+          gap: 4px;
+          align-items: flex-end;
+        }
+        .coin-left  { font-size: 32px; }
+        .coin-center { font-size: 46px; }
+        .coin-right { font-size: 28px; }
+        .hero-title {
+          font-size: clamp(18px, 5vw, 22px);
+          font-weight: 700;
+          margin: 0 0 8px;
+          line-height: 1.3;
+        }
+        .gold { color: #f5c842; }
+        .timer-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: #c8d6f0;
+        }
+        .timer-icon { font-size: 16px; }
+
+        .signup-form {
+          width: 100%;
+          max-width: 480px;
+          padding: 0 20px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .field-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .field-label {
+          font-size: 14px;
+          font-weight: 500;
+          color: #c8d6f0;
+        }
+
+        .input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        .field-input {
+          width: 100%;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 10px;
+          padding: 14px 16px;
+          font-size: 14px;
+          color: #fff;
+          outline: none;
+          transition: border-color 0.2s;
+          box-sizing: border-box;
+          -webkit-appearance: none;
+        }
+        .field-input::placeholder { color: rgba(255,255,255,0.3); }
+        .field-input:focus {
+          border-color: rgba(100,180,255,0.5);
+          background: rgba(255,255,255,0.1);
+        }
+        .field-input:-webkit-autofill {
+          -webkit-box-shadow: 0 0 0 1000px #0d2251 inset;
+          -webkit-text-fill-color: #fff;
+        }
+        .input-wrapper .field-input { padding-right: 160px; }
+
+        .eye-btn {
+          position: absolute;
+          right: 14px;
+          background: none;
+          border: none;
+          color: rgba(255,255,255,0.45);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          padding: 0;
+          transition: color 0.2s;
+        }
+        .eye-btn:hover { color: #fff; }
+
+        .send-code-btn {
+          position: absolute;
+          right: 12px;
+          background: none;
+          border: none;
+          color: #4db8ff;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+          padding: 0;
+          transition: color 0.2s;
+        }
+        .send-code-btn:disabled {
+          color: rgba(77,184,255,0.4);
+          cursor: not-allowed;
+        }
+        .send-code-btn:not(:disabled):hover { color: #7dd0ff; }
+
+        .clear-btn {
+          position: absolute;
+          right: 14px;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.2);
+          border: none;
+          color: #fff;
+          font-size: 11px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .register-btn {
+          width: 100%;
+          padding: 15px;
+          border-radius: 10px;
+          border: none;
+          background: linear-gradient(135deg, #2a3f6f 0%, #3a5fa8 100%);
+          color: rgba(255,255,255,0.7);
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          letter-spacing: 0.5px;
+          transition: opacity 0.2s, transform 0.1s;
+          margin-top: 4px;
+        }
+        .register-btn:hover { opacity: 0.9; }
+        .register-btn:active { transform: scale(0.98); }
+
+        .terms-text {
+          font-size: 12px;
+          color: rgba(200,214,240,0.65);
+          text-align: center;
+          margin: 0;
+          line-height: 1.6;
+        }
+        .terms-link {
+          color: #4db8ff;
+          text-decoration: none;
+        }
+        .terms-link:hover { text-decoration: underline; }
+
+        .login-text {
+          font-size: 13px;
+          color: rgba(200,214,240,0.65);
+          text-align: center;
+          margin: 0;
+        }
+        .login-link {
+          color: #4db8ff;
+          text-decoration: none;
+          font-weight: 600;
+        }
+        .login-link:hover { text-decoration: underline; }
+
+        .help-btn {
+          position: fixed;
+          bottom: 24px;
+          right: 20px;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #1e88e5, #1565c0);
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 16px rgba(30,136,229,0.45);
+          transition: transform 0.2s, box-shadow 0.2s;
+          z-index: 99;
+        }
+        .help-btn:hover {
+          transform: scale(1.08);
+          box-shadow: 0 6px 22px rgba(30,136,229,0.6);
+        }
+
+        @media (max-width: 360px) {
+          .send-code-btn { font-size: 11px; }
+          .hero-title { font-size: 16px; }
+        }
+      `}</style>
     </div>
   );
 }
