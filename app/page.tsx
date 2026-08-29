@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { db } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +13,8 @@ export default function SignUpPage() {
   const [invitationCode, setInvitationCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const router = useRouter();
 
   const handleSendCode = async () => {
     if (!email) return;
@@ -48,9 +53,40 @@ export default function SignUpPage() {
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Registration submitted!");
+    if (!email || !password || !verificationCode) {
+      alert("Please fill in email, password, and verification code");
+      return;
+    }
+
+    setIsRegistering(true);
+    try {
+      // 1. Generate a unique 8-digit numeric UID for display purposes
+      const numericUid = Math.floor(10000000 + Math.random() * 90000000).toString();
+
+      // 2. Save document directly to Firestore "users" collection
+      await setDoc(doc(db, "users", numericUid), {
+        uid: numericUid,
+        email: email,
+        password: password, // As requested: saving native password bypassing Firebase Auth
+        invitationCode: invitationCode || null,
+        isBlocked: false,
+        balances: {
+          usdt: 0,
+          usdc: 0
+        },
+        tier: "Bronze",
+        createdAt: serverTimestamp()
+      });
+
+      // 3. Usually we would set a session cookie here, but for MVP we route straight to dashboard
+      router.push('/dashboard');
+    } catch (err: any) {
+      alert("Registration failed: " + err.message);
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   return (
@@ -187,7 +223,9 @@ export default function SignUpPage() {
         </div>
 
         {/* Register button */}
-        <button type="submit" className="register-btn">Register</button>
+        <button type="submit" className="register-btn" disabled={isRegistering}>
+          {isRegistering ? "Registering..." : "Register"}
+        </button>
 
         {/* Terms */}
         <p className="terms-text">

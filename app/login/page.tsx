@@ -2,125 +2,147 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 export default function LoginPage() {
-    const [email, setEmail] = useState("user@example.com");
-    const [password, setPassword] = useState("password123");
-    const [showPassword, setShowPassword] = useState(false);
-    const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (email === "user@example.com" && password === "password123") {
-            router.push("/dashboard");
-        } else {
-            alert("Invalid credentials! Use user@example.com and password123");
-        }
-    };
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-    return (
-        <div className="login-root">
-            {/* Top bar */}
-            <div className="top-bar">
-                <button className="back-btn" aria-label="Go back">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                </button>
-                <button className="lang-btn" aria-label="Language">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
-                    </svg>
-                </button>
-            </div>
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      alert("Please enter both email and password.");
+      return;
+    }
 
-            {/* Hero */}
-            <div className="hero">
-                <div className="coins-img" aria-hidden="true">
-                    <span className="coin coin-left">💰</span>
-                    <span className="coin coin-center">🪙</span>
-                    <span className="coin coin-right">💵</span>
-                </div>
-                <h1 className="hero-title">Welcome Back!</h1>
-                <p className="hero-sub">Log in to your account</p>
-            </div>
+    setIsLoggingIn(true);
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", email), where("password", "==", password));
+      const querySnapshot = await getDocs(q);
 
-            {/* Form */}
-            <form className="login-form" onSubmit={handleLogin} noValidate>
-                {/* Email */}
-                <div className="field-group">
-                    <label className="field-label" htmlFor="email">Email</label>
-                    <input
-                        id="email"
-                        type="email"
-                        className="field-input"
-                        placeholder="Please enter your email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        autoComplete="email"
-                        required
-                    />
-                </div>
+      if (querySnapshot.empty) {
+        alert("Invalid credentials! User not found.");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      alert("Login error: " + err.message);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
-                {/* Password */}
-                <div className="field-group">
-                    <label className="field-label" htmlFor="password">Password</label>
-                    <div className="input-wrapper">
-                        <input
-                            id="password"
-                            type={showPassword ? "text" : "password"}
-                            className="field-input"
-                            placeholder="Please enter your password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            autoComplete="current-password"
-                            required
-                        />
-                        <button
-                            type="button"
-                            className="eye-btn"
-                            onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? "Hide password" : "Show password"}
-                        >
-                            {showPassword ? (
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M17.94 17.94A10.07 10.07 0 0112 20C7 20 2.73 16.39 1 12a10.07 10.07 0 012.06-3.94M9.9 4.24A9.12 9.12 0 0112 4c5 0 9.27 3.61 11 8a10.07 10.07 0 01-1.35 2.71" />
-                                    <line x1="1" y1="1" x2="23" y2="23" />
-                                </svg>
-                            ) : (
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                            )}
-                        </button>
-                    </div>
-                </div>
+  return (
+    <div className="login-root">
+      {/* Top bar */}
+      <div className="top-bar">
+        <button className="back-btn" aria-label="Go back">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <button className="lang-btn" aria-label="Language">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
+          </svg>
+        </button>
+      </div>
 
-                {/* Forgot password */}
-                <div className="forgot-row">
-                    <a href="#" className="forgot-link">Forgot Password?</a>
-                </div>
+      {/* Hero */}
+      <div className="hero">
+        <div className="coins-img" aria-hidden="true">
+          <span className="coin coin-left">💰</span>
+          <span className="coin coin-center">🪙</span>
+          <span className="coin coin-right">💵</span>
+        </div>
+        <h1 className="hero-title">Welcome Back!</h1>
+        <p className="hero-sub">Log in to your account</p>
+      </div>
 
-                {/* Login button */}
-                <button type="submit" className="login-btn">Log In</button>
+      {/* Form */}
+      <form className="login-form" onSubmit={handleLogin} noValidate>
+        {/* Email */}
+        <div className="field-group">
+          <label className="field-label" htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            className="field-input"
+            placeholder="Please enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+          />
+        </div>
 
-                {/* Sign up link */}
-                <p className="signup-text">
-                    Don&apos;t Have An Account?{" "}
-                    <a href="/" className="signup-link">Sign Up Now</a>
-                </p>
-            </form>
-
-            {/* Help button */}
-            <button className="help-btn" aria-label="Need help?">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+        {/* Password */}
+        <div className="field-group">
+          <label className="field-label" htmlFor="password">Password</label>
+          <div className="input-wrapper">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              className="field-input"
+              placeholder="Please enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              className="eye-btn"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20C7 20 2.73 16.39 1 12a10.07 10.07 0 012.06-3.94M9.9 4.24A9.12 9.12 0 0112 4c5 0 9.27 3.61 11 8a10.07 10.07 0 01-1.35 2.71" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
             </button>
+          </div>
+        </div>
 
-            <style jsx>{`
+        {/* Forgot password */}
+        <div className="forgot-row">
+          <a href="#" className="forgot-link">Forgot Password?</a>
+        </div>
+
+        {/* Login button */}
+        <button type="submit" className="login-btn" disabled={isLoggingIn}>
+          {isLoggingIn ? "Logging in..." : "Log In"}
+        </button>
+
+        {/* Sign up link */}
+        <p className="signup-text">
+          Don&apos;t Have An Account?{" "}
+          <a href="/" className="signup-link">Sign Up Now</a>
+        </p>
+      </form>
+
+      {/* Help button */}
+      <button className="help-btn" aria-label="Need help?">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+        </svg>
+      </button>
+
+      <style jsx>{`
         .login-root {
           min-height: 100vh;
           width: 100%;
@@ -321,6 +343,6 @@ export default function LoginPage() {
           .hero-title { font-size: 18px; }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
