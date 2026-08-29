@@ -24,6 +24,10 @@ export async function POST(request: Request) {
             html: html || '<p>Congrats on successfully integrating your <strong>Resend</strong> email API with your Next.js application!</p>'
         });
 
+        if (data.error) {
+            return NextResponse.json({ success: false, error: data.error.message }, { status: 400 });
+        }
+
         return NextResponse.json({ success: true, data });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

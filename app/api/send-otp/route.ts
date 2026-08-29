@@ -41,6 +41,10 @@ export async function POST(request: Request) {
             html: htmlTemplate
         });
 
+        if (data.error) {
+            return NextResponse.json({ success: false, error: data.error.message }, { status: 400 });
+        }
+
         return NextResponse.json({ success: true, message: "OTP sent successfully!", data });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
