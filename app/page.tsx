@@ -11,8 +11,10 @@ export default function SignUpPage() {
   const [codeSent, setCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     if (!email) return;
+
+    // Start countdown UI
     setCodeSent(true);
     setCountdown(60);
     const timer = setInterval(() => {
@@ -25,6 +27,25 @@ export default function SignUpPage() {
         return prev - 1;
       });
     }, 1000);
+
+    // Call API
+    try {
+      const response = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      if (!data.success) {
+        alert("Failed to send code: " + data.error);
+        clearInterval(timer);
+        setCodeSent(false);
+      }
+    } catch (err) {
+      alert("Error sending verification code.");
+      clearInterval(timer);
+      setCodeSent(false);
+    }
   };
 
   const handleRegister = (e: React.FormEvent) => {
