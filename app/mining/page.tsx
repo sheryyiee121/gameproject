@@ -1,10 +1,28 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function MiningPage() {
     const router = useRouter();
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const uid = localStorage.getItem("nexmine_uid");
+        if (uid) {
+            getDoc(doc(db, "users", uid)).then(docSnap => {
+                if (docSnap.exists()) {
+                    setUser(docSnap.data());
+                } else {
+                    router.push('/login');
+                }
+            });
+        } else {
+            router.push('/login');
+        }
+    }, [router]);
 
     return (
         <div className="mining-root">
@@ -22,7 +40,7 @@ export default function MiningPage() {
                     <div className="tier-icon">
                         <span className="emoji-badge">🥉</span>
                     </div>
-                    <h2 className="tier-name">Bronze</h2>
+                    <h2 className="tier-name">{user?.tier || 'Bronze'}</h2>
                 </div>
 
                 {/* Stats Grid */}
@@ -31,28 +49,28 @@ export default function MiningPage() {
                         <span className="lbl">Account Balance</span>
                         <div className="val-row">
                             <span className="usdt-icon">₮</span>
-                            <span className="val">488.6932</span>
+                            <span className="val">{user?.balances?.usdt?.toFixed(4) || '0.00'}</span>
                         </div>
                     </div>
                     <div className="stat-box">
                         <span className="lbl">Total Stake Amount</span>
                         <div className="val-row">
                             <span className="usdt-icon">₮</span>
-                            <span className="val">300</span>
+                            <span className="val">300.0000</span>
                         </div>
                     </div>
                     <div className="stat-box">
                         <span className="lbl">Total Profit</span>
                         <div className="val-row">
                             <span className="profit-icon">✨</span>
-                            <span className="val">140851.2568</span>
+                            <span className="val">0.0000</span>
                         </div>
                     </div>
                     <div className="stat-box">
                         <span className="lbl">Today Profit</span>
                         <div className="val-row">
                             <span className="profit-icon">✨</span>
-                            <span className="val">690.7689</span>
+                            <span className="val">0.0000</span>
                         </div>
                     </div>
                 </div>

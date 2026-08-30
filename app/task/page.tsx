@@ -1,10 +1,28 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function TaskPage() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const uid = localStorage.getItem("nexmine_uid");
+    if (uid) {
+      getDoc(doc(db, "users", uid)).then(docSnap => {
+        if (docSnap.exists()) {
+          setUser(docSnap.data());
+        } else {
+          router.push('/login');
+        }
+      });
+    } else {
+      router.push('/login');
+    }
+  }, [router]);
 
   return (
     <div className="task-root">

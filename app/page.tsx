@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -18,6 +19,20 @@ export default function SignUpPage() {
 
   const handleSendCode = async () => {
     if (!email) return;
+
+    // Check if account already exists before sending OTP
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", email));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        alert("An account with this email already exists! Please log in instead.");
+        return;
+      }
+    } catch (err: any) {
+      alert("Database error: " + err.message);
+      return;
+    }
 
     // Start countdown UI
     setCodeSent(true);
@@ -55,8 +70,8 @@ export default function SignUpPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !verificationCode) {
-      alert("Please fill in email, password, and verification code");
+    if (!email || !password || !verificationCode || !username) {
+      alert("Please fill in username, email, password, and verification code");
       return;
     }
 
@@ -65,22 +80,34 @@ export default function SignUpPage() {
       // 1. Generate a unique 8-digit numeric UID for display purposes
       const numericUid = Math.floor(10000000 + Math.random() * 90000000).toString();
 
+      // 1a. Generate Random Invitiation Code dynamically for this user
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let generatedInviteCode = "";
+      for (let i = 0; i < 7; i++) {
+        generatedInviteCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
       // 2. Save document directly to Firestore "users" collection
       await setDoc(doc(db, "users", numericUid), {
         uid: numericUid,
         email: email,
-        password: password, // As requested: saving native password bypassing Firebase Auth
+        username: username,
+        password: password,
         invitationCode: invitationCode || null,
+        myInviteCode: generatedInviteCode,
         isBlocked: false,
         balances: {
           usdt: 0,
-          usdc: 0
+          usdc: 0,
+          btc: 0
         },
+        hasClaimedBonus: false,
         tier: "Bronze",
         createdAt: serverTimestamp()
       });
 
-      // 3. Usually we would set a session cookie here, but for MVP we route straight to dashboard
+      // 3. Keep them logged in by caching the exact ID to their browser
+      localStorage.setItem("nexmine_uid", numericUid);
       router.push('/dashboard');
     } catch (err: any) {
       alert("Registration failed: " + err.message);
@@ -124,6 +151,19 @@ export default function SignUpPage() {
 
       {/* Form */}
       <form className="signup-form" onSubmit={handleRegister} noValidate>
+        {/* Username */}
+        <div className="field-group">
+          <label className="field-label" htmlFor="username">Username</label>
+          <input
+            id="username"
+            type="text"
+            className="field-input"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Please enter your unique username"
+          />
+        </div>
+
         {/* Email */}
         <div className="field-group">
           <label className="field-label" htmlFor="email">Email</label>
@@ -229,7 +269,7 @@ export default function SignUpPage() {
 
         {/* Terms */}
         <p className="terms-text">
-          Registering Means That I Agree To SaxAi{" "}
+          Registering Means That I Agree To Nexmine{" "}
           <a href="#" className="terms-link">Service Agreement</a>
           {" "}And{" "}
           <a href="#" className="terms-link">Privacy Policy</a>

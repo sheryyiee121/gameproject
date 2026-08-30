@@ -1,10 +1,33 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 export default function AssetPage() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+
+  const [history, setHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    const uid = localStorage.getItem("nexmine_uid");
+    if (uid) {
+      getDoc(doc(db, "users", uid)).then(docSnap => {
+        if (docSnap.exists()) {
+          setUser(docSnap.data());
+        }
+      });
+      // Fetch History
+      const q = query(collection(db, "users", uid, "transactions"), orderBy("timestamp", "desc"));
+      getDocs(q).then(snap => {
+        const txs: any[] = [];
+        snap.forEach(d => txs.push(d.data()));
+        setHistory(txs);
+      }).catch(console.error);
+    }
+  }, []);
 
   return (
     <div className="asset-root">
@@ -34,7 +57,7 @@ export default function AssetPage() {
           </div>
 
           <div className="card-main-val">
-            <span className="amount">788.6932</span>
+            <span className="amount">{user?.balances?.usdt?.toFixed(4) || "0.0000"}</span>
             <span className="currency">USDT</span>
           </div>
 
@@ -43,18 +66,18 @@ export default function AssetPage() {
               <line x1="12" y1="19" x2="12" y2="5"></line>
               <polyline points="5 12 12 5 19 12"></polyline>
             </svg>
-            <span className="trend-val">+233.2035$(41%)</span>
-            <span className="trend-period">Last 7 Days</span>
+            <span className="trend-val">+0.00$(+0.01%)</span>
+            <span className="trend-period">Mining ROI</span>
           </div>
 
           <div className="inner-boxes">
             <div className="inner-box">
               <span className="box-title">Available</span>
-              <span className="box-val">488.6932$</span>
+              <span className="box-val">${user?.balances?.usdt?.toFixed(4) || "0"}</span>
             </div>
             <div className="inner-box">
-              <span className="box-title">Stake Amount</span>
-              <span className="box-val">300$</span>
+              <span className="box-title">Total USDCs</span>
+              <span className="box-val">${user?.balances?.usdc?.toFixed(4) || "0"}</span>
             </div>
           </div>
         </div>
@@ -81,7 +104,7 @@ export default function AssetPage() {
             </div>
             <span className="action-label">Withdraw</span>
           </div>
-          <div className="action-item">
+          <div className="action-item" onClick={() => router.push('/bill')} style={{ cursor: 'pointer' }}>
             <div className="action-icon-wrapper">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -95,41 +118,39 @@ export default function AssetPage() {
           </div>
         </div>
 
-        {/* Asset List */}
+        {/* Asset List / History */}
         <div className="asset-list-card">
           <div className="asset-list-header">
-            <span>Asset List</span>
+            <h2 className="list-title">Asset History</h2>
           </div>
 
-          {/* SXX */}
-          <div className="asset-row">
-            <div className="asset-left">
-              <div className="coin-icon" style={{ background: '#0ea5e9' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#fff" />
-                  <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+          <div className="list-content">
+            {history.length > 0 ? history.map((tx, idx) => (
+              <div className="asset-row" key={idx}>
+                <div className="asset-left">
+                  <div className="coin-icon" style={{ background: tx.type === 'deposit' ? '#10b981' : '#ef4444' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {tx.type === 'deposit' ? (
+                        <path d="M12 5v14M5 12l7-7 7 7" />
+                      ) : (
+                        <path d="M12 19V5M5 12l7 7 7-7" />
+                      )}
+                    </svg>
+                  </div>
+                  <span className="coin-name">{tx.type === 'deposit' ? 'Admin Deposit' : 'Withdrawal'} ({tx.token})</span>
+                </div>
+                <div className="asset-right">
+                  <span className="coin-bal" style={{ color: tx.type === 'deposit' ? '#10b981' : '#ef4444' }}>
+                    {tx.type === 'deposit' ? '+' : '-'}${tx.amount.toFixed(2)}
+                  </span>
+                  <span className="coin-usd">{new Date(tx.timestamp).toLocaleString()}</span>
+                </div>
               </div>
-              <span className="coin-name">SXX</span>
-            </div>
-            <div className="asset-right">
-              <span className="coin-bal">22163.2962</span>
-              <span className="coin-usd">≈ 110.8164 USDT</span>
-            </div>
-          </div>
-
-          {/* TRX */}
-          <div className="asset-row">
-            <div className="asset-left">
-              <div className="coin-icon" style={{ background: '#ef4444' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon><line x1="12" y1="22" x2="12" y2="12"></line><line x1="22" y1="8.5" x2="12" y2="12"></line><line x1="2" y1="8.5" x2="12" y2="12"></line></svg>
+            )) : (
+              <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '14px' }}>
+                No history found. Deposits will appear here.
               </div>
-              <span className="coin-name">TRX</span>
-            </div>
-            <div className="asset-right">
-              <span className="coin-bal">0</span>
-              <span className="coin-usd">≈ 0 USDT</span>
-            </div>
+            )}
           </div>
 
           {/* USDT */}

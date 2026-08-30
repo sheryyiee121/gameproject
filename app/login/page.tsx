@@ -29,6 +29,8 @@ export default function LoginPage() {
       if (querySnapshot.empty) {
         alert("Invalid credentials! User not found.");
       } else {
+        const userDoc = querySnapshot.docs[0];
+        localStorage.setItem("nexmine_uid", userDoc.id);
         router.push("/dashboard");
       }
     } catch (err: any) {

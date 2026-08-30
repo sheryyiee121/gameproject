@@ -1,10 +1,46 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 
 export default function ProfilePage() {
     const router = useRouter();
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const uid = localStorage.getItem("nexmine_uid");
+        if (uid) {
+            getDoc(doc(db, "users", uid)).then(docSnap => {
+                if (docSnap.exists()) {
+                    setUser(docSnap.data());
+                } else {
+                    router.push('/login');
+                }
+            });
+        } else {
+            router.push('/login');
+        }
+    }, [router]);
+
+    const handleLogout = () => {
+        localStorage.removeItem("nexmine_uid");
+        router.push("/login");
+    };
+
+    const handleDeleteAccount = async () => {
+        const proceed = window.confirm("Are you ABSOLUTELY sure you want to delete your account? This cannot be undone.");
+        if (proceed && user) {
+            try {
+                await deleteDoc(doc(db, "users", user.uid));
+                localStorage.removeItem("nexmine_uid");
+                router.push("/login");
+            } catch (err: any) {
+                alert("Failed to delete: " + err.message);
+            }
+        }
+    };
 
     return (
         <div className="profile-root">
@@ -15,7 +51,7 @@ export default function ProfilePage() {
                         <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#0ea5e9" />
                         <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span className="logo-text">SaxAi</span>
+                    <span className="logo-text">Nexmine</span>
                 </div>
                 <div className="nav-icons">
                     <button className="icon-btn" aria-label="Language">
@@ -45,18 +81,18 @@ export default function ProfilePage() {
                     </div>
                     <div className="profile-info">
                         <div className="username-row">
-                            <h2 className="username">Djordjevuletic1973</h2>
+                            <h2 className="username">{user?.username || 'Loading...'}</h2>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="chevron-icon">
                                 <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
                         </div>
                         <div className="badges-row">
                             <div className="badge">
-                                <span>UID: 80016785</span>
+                                <span>UID: {user?.uid || '---'}</span>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </div>
                             <div className="badge">
-                                <span>Invitation Code: 3YW1Y76</span>
+                                <span>Invitation Code: {user?.myInviteCode || '---'}</span>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </div>
                         </div>
@@ -118,14 +154,14 @@ export default function ProfilePage() {
                     <div className="stats-row" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <div className="stat-col">
                             <span className="stat-label">Total Assets</span>
-                            <span className="stat-val">788.6932$</span>
+                            <span className="stat-val">${(user?.balances?.usdt || 0).toFixed(4)}</span>
                         </div>
                         <div className="stat-col flex-end">
                             <div className="stat-header">
                                 <span className="stat-label">Available</span>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a7c9d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="chevron-sm"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </div>
-                            <span className="stat-val text-blue">488.6932$</span>
+                            <span className="stat-val text-blue">${(user?.balances?.usdt || 0).toFixed(4)}</span>
                         </div>
                     </div>
 
@@ -187,6 +223,16 @@ export default function ProfilePage() {
                             <span>Login Password</span>
                         </div>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7c9d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    <div className="setting-item" onClick={handleLogout} style={{ border: '1px solid #e2e8f0', background: '#334155' }}>
+                        <div className="setting-left">
+                            <span style={{ color: '#fff', marginLeft: '36px' }}>Logout / Sign Out</span>
+                        </div>
+                    </div>
+                    <div className="setting-item" onClick={handleDeleteAccount} style={{ border: '2px solid #ef4444', background: 'transparent' }}>
+                        <div className="setting-left">
+                            <span style={{ color: '#ef4444', marginLeft: '36px' }}>Delete My Account</span>
+                        </div>
                     </div>
                 </div>
 

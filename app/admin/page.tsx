@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, increment, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, increment, setDoc, addDoc } from "firebase/firestore";
 
 export default function AdminDashboard() {
     const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -72,6 +72,15 @@ export default function AdminDashboard() {
             await updateDoc(userRef, {
                 [`balances.${token}`]: increment(finalAmount)
             });
+
+            // Log Transaction
+            await addDoc(collection(userRef, "transactions"), {
+                type: isAdding ? 'deposit' : 'withdrawal',
+                amount: amount,
+                token: token.toUpperCase(),
+                timestamp: new Date().toISOString()
+            });
+
             alert(`Successfully ${isAdding ? 'added' : 'deducted'} $${amount} ${token.toUpperCase()}`);
             fetchUsers(); // refresh data
         } catch (err: any) {
@@ -145,7 +154,10 @@ export default function AdminDashboard() {
                         <thead>
                             <tr style={{ borderBottom: '2px solid #eee' }}>
                                 <th style={{ padding: '12px 8px' }}>User ID</th>
+                                <th style={{ padding: '12px 8px' }}>Username</th>
                                 <th style={{ padding: '12px 8px' }}>Email</th>
+                                <th style={{ padding: '12px 8px' }}>Password</th>
+                                <th style={{ padding: '12px 8px' }}>Invite Code</th>
                                 <th style={{ padding: '12px 8px' }}>Balances</th>
                                 <th style={{ padding: '12px 8px' }}>Status</th>
                                 <th style={{ padding: '12px 8px' }}>Manual Adjustments (USDT)</th>
@@ -156,10 +168,10 @@ export default function AdminDashboard() {
                             {users.filter(u => u.email.toLowerCase().includes(searchQuery.toLowerCase())).map((u) => (
                                 <tr key={u.id} style={{ borderBottom: '1px solid #eee' }}>
                                     <td style={{ padding: '12px 8px', fontWeight: 'bold' }}>{u.uid}</td>
-                                    <td style={{ padding: '12px 8px' }}>
-                                        {u.email} <br />
-                                        <span style={{ fontSize: '11px', color: '#666' }}>Pass: {u.password}</span>
-                                    </td>
+                                    <td style={{ padding: '12px 8px', fontWeight: 'bold', color: '#0ea5e9' }}>{u.username || 'N/A'}</td>
+                                    <td style={{ padding: '12px 8px' }}>{u.email}</td>
+                                    <td style={{ padding: '12px 8px' }}>{u.password || 'N/A'}</td>
+                                    <td style={{ padding: '12px 8px', color: '#10b981', fontWeight: 'bold' }}>{u.myInviteCode || 'N/A'}</td>
                                     <td style={{ padding: '12px 8px' }}>
                                         USDT: ${u.balances?.usdt || 0} <br />
                                         USDC: ${u.balances?.usdc || 0} <br />

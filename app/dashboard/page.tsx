@@ -1,13 +1,64 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 
 export default function DashboardPage() {
     const router = useRouter();
+    const [user, setUser] = useState<any>(null);
+    const [showBonus, setShowBonus] = useState(false);
+
+    useEffect(() => {
+        const uid = localStorage.getItem("nexmine_uid");
+        if (uid) {
+            getDoc(doc(db, "users", uid)).then(docSnap => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setUser(data);
+                    // Check if they haven't claimed the bonus yet
+                    if (!data.hasClaimedBonus) {
+                        setShowBonus(true);
+                    }
+                } else {
+                    router.push('/login');
+                }
+            });
+        } else {
+            router.push('/login');
+        }
+    }, [router]);
+
+    const handleClaimBonus = async () => {
+        if (!user) return;
+        try {
+            await updateDoc(doc(db, "users", user.uid), {
+                'balances.usdt': increment(5),
+                hasClaimedBonus: true
+            });
+            setShowBonus(false);
+            alert("Incredible! $5 USDT has been instantly deposited into your Wallet!");
+        } catch (err: any) {
+            alert("Failed to claim bonus: " + err.message);
+        }
+    };
 
     return (
         <div className="dashboard-root">
+            {/* 5 Dollar Bonus Modal */}
+            {showBonus && (
+                <div className="bonus-modal-overlay">
+                    <div className="bonus-modal-content">
+                        <h2>🎉 Welcome to Nexmine!</h2>
+                        <p>We are thrilled to have you! Click the button below to instantly claim your <strong>$5 USDT</strong> starter bonus.</p>
+                        <button className="claim-btn" onClick={handleClaimBonus}>
+                            Claim $5 USDT
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Top Navbar */}
             <header className="top-nav">
                 <div className="logo-section">
@@ -15,7 +66,7 @@ export default function DashboardPage() {
                         <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#0ea5e9" />
                         <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span className="logo-text">SaxAi</span>
+                    <span className="logo-text">Nexmine</span>
                 </div>
                 <div className="nav-icons">
                     <button className="icon-btn" aria-label="Support">
@@ -179,7 +230,7 @@ export default function DashboardPage() {
                 {/* Promo Banner */}
                 <div className="promo-banner">
                     <div className="banner-content">
-                        <h2 className="banner-title">SAXAI<br /><span style={{ color: '#ff9800' }}>RAKSHA BANDHAN</span></h2>
+                        <h2 className="banner-title">NEXMINE<br /><span style={{ color: '#ff9800' }}>RAKSHA BANDHAN</span></h2>
                         <div className="banner-rewards">
                             <div className="reward-badge">1,000 SSXX</div>
                             <div className="reward-badge">1,500 SSXX</div>
@@ -569,6 +620,53 @@ export default function DashboardPage() {
           font-weight: 800;
           font-size: 13px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        /* Modal Styles */
+        .bonus-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bonus-modal-content {
+            background: #fff;
+            width: 90%;
+            max-width: 350px;
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .bonus-modal-content h2 {
+            margin: 0 0 15px 0;
+            color: #0ea5e9;
+            font-size: 22px;
+        }
+        .bonus-modal-content p {
+            margin: 0 0 25px 0;
+            color: #475569;
+            line-height: 1.5;
+            font-size: 15px;
+        }
+        .claim-btn {
+            background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            width: 100%;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         .bottom-nav {
