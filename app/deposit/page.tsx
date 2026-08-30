@@ -55,7 +55,7 @@ export default function DepositPage() {
                             key={coin}
                             onClick={() => {
                                 setSelectedCoin(coin as any);
-                                setSelectedNetwork(Object.keys(addresses[coin as any])[0]);
+                                setSelectedNetwork(Object.keys(addresses[coin as string])[0]);
                             }}
                             style={{
                                 flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid',
