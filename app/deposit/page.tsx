@@ -9,7 +9,7 @@ export default function DepositPage() {
     const [selectedNetwork, setSelectedNetwork] = useState<string>('BEP20');
 
     // Hardcoded addresses provided by Admin
-    const addresses = {
+    const addresses: Record<string, Record<string, string>> = {
         USDT: {
             'BEP20 / ERC20': '0xc8985fd4de706497593080c387c8a86ee82b71f2',
             'TRC20': 'TBHn9sWLAc6kP1rxfdQU5zBNpyUUbtu9wN',
