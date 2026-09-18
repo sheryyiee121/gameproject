@@ -186,8 +186,8 @@ export default function AssetPage() {
               <span className="coin-name">USDT</span>
             </div>
             <div className="asset-right">
-              <span className="coin-bal">165.929</span>
-              <span className="coin-usd">≈ 165.929 USDT</span>
+              <span className="coin-bal">{(user?.balances?.usdt || 0).toFixed(3)}</span>
+              <span className="coin-usd">≈ {(user?.balances?.usdt || 0).toFixed(3)} USDT</span>
             </div>
           </div>
 
