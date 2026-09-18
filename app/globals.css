@@ -1,26 +1,89 @@
 @import "tailwindcss";
 
+/* ============================================================
+   NEXMINE DESIGN SYSTEM — Ink Black & Slate Grey Palette
+   #00030D · #010413 · #000717 · #000619 · #818894
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Background hierarchy (darkest → lighter dark) */
+  --bg-primary: #00030D;
+  /* Page background */
+  --bg-secondary: #010413;
+  /* Cards, panels */
+  --bg-tertiary: #000717;
+  /* Elevated cards */
+  --bg-surface: #000619;
+  /* Hover states, subtle fills */
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: #818894;
+  /* Slate Grey */
+  --text-muted: rgba(129, 136, 148, 0.55);
+
+  /* Borders */
+  --border: rgba(129, 136, 148, 0.15);
+  --border-strong: rgba(129, 136, 148, 0.30);
+
+  /* Accent (kept from existing design — works great on dark) */
+  --accent: #0ea5e9;
+  --accent-dark: #0284c7;
+  --accent-glow: rgba(14, 165, 233, 0.25);
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+
+  /* Legacy compat */
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* @theme variables handled via :root above */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* ============================================================
+   SCROLLBAR (dark theme)
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(129, 136, 148, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 136, 148, 0.5);
+}
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+::selection {
+  background: var(--accent-glow);
+  color: #fff;
 }

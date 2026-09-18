@@ -42,113 +42,121 @@ export default function LoginPage() {
 
   return (
     <div className="login-root">
+      {/* Animated background orbs */}
+      <div className="bg-orb orb-1"></div>
+      <div className="bg-orb orb-2"></div>
+      <div className="bg-orb orb-3"></div>
+
       {/* Top bar */}
       <div className="top-bar">
-        <button className="back-btn" aria-label="Go back">
+        <button className="back-btn" onClick={() => router.back()} aria-label="Go back">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <button className="lang-btn" aria-label="Language">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
           </svg>
         </button>
       </div>
 
       {/* Hero */}
       <div className="hero">
-        <div className="coins-img" aria-hidden="true">
-          <span className="coin coin-left">💰</span>
-          <span className="coin coin-center">🪙</span>
-          <span className="coin coin-right">💵</span>
+        <div className="hero-logo">
+          <img src="/nexmine-logo.png" alt="Nexmine AI" className="hero-logo-img" />
         </div>
-        <h1 className="hero-title">Welcome Back!</h1>
-        <p className="hero-sub">Log in to your account</p>
+        <p className="hero-sub">Sign in to continue mining</p>
       </div>
 
-      {/* Form */}
-      <form className="login-form" onSubmit={handleLogin} noValidate>
-        {/* Email */}
-        <div className="field-group">
-          <label className="field-label" htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            className="field-input"
-            placeholder="Please enter your email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
-        </div>
-
-        {/* Password */}
-        <div className="field-group">
-          <label className="field-label" htmlFor="password">Password</label>
-          <div className="input-wrapper">
+      {/* Glass Form Card */}
+      <div className="glass-card">
+        <form className="login-form" onSubmit={handleLogin} noValidate>
+          {/* Email */}
+          <div className="field-group">
+            <label className="field-label" htmlFor="email">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818894" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
+              Email Address
+            </label>
             <input
-              id="password"
-              type={showPassword ? "text" : "password"}
+              id="email"
+              type="email"
               className="field-input"
-              placeholder="Please enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
               required
             />
-            <button
-              type="button"
-              className="eye-btn"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20C7 20 2.73 16.39 1 12a10.07 10.07 0 012.06-3.94M9.9 4.24A9.12 9.12 0 0112 4c5 0 9.27 3.61 11 8a10.07 10.07 0 01-1.35 2.71" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
           </div>
-        </div>
 
-        {/* Forgot password */}
-        <div className="forgot-row">
-          <a href="#" className="forgot-link">Forgot Password?</a>
-        </div>
+          {/* Password */}
+          <div className="field-group">
+            <label className="field-label" htmlFor="password">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818894" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+              Password
+            </label>
+            <div className="input-wrapper">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                className="field-input"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="eye-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20C7 20 2.73 16.39 1 12a10.07 10.07 0 012.06-3.94M9.9 4.24A9.12 9.12 0 0112 4c5 0 9.27 3.61 11 8a10.07 10.07 0 01-1.35 2.71" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
 
-        {/* Login button */}
-        <button type="submit" className="login-btn" disabled={isLoggingIn}>
-          {isLoggingIn ? "Logging in..." : "Log In"}
-        </button>
+          {/* Forgot password */}
+          <div className="forgot-row">
+            <a href="#" className="forgot-link">Forgot Password?</a>
+          </div>
 
-        {/* Sign up link */}
-        <p className="signup-text">
-          Don&apos;t Have An Account?{" "}
-          <a href="/" className="signup-link">Sign Up Now</a>
-        </p>
-      </form>
+          {/* Login button */}
+          <button type="submit" className="login-btn" disabled={isLoggingIn}>
+            {isLoggingIn ? (
+              <span className="btn-loading">
+                <span className="spinner"></span> Signing in...
+              </span>
+            ) : "Sign In"}
+          </button>
 
-      {/* Help button */}
-      <button className="help-btn" aria-label="Need help?">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
-        </svg>
-      </button>
+          {/* Divider */}
+          <div className="divider-row">
+            <span className="divider-line"></span>
+            <span className="divider-text">or</span>
+            <span className="divider-line"></span>
+          </div>
+
+          {/* Sign up link */}
+          <p className="signup-text">
+            Don&apos;t have an account?{" "}
+            <a href="/" className="signup-link">Create Account</a>
+          </p>
+        </form>
+      </div>
 
       <style jsx>{`
         .login-root {
           min-height: 100vh;
           width: 100%;
-          background: linear-gradient(180deg, #0a1a3a 0%, #0d2251 40%, #0a2040 100%);
+          background: #00030D;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -157,81 +165,138 @@ export default function LoginPage() {
           color: #fff;
           padding-bottom: 40px;
           box-sizing: border-box;
+          overflow: hidden;
+        }
+
+        /* Animated background orbs */
+        .bg-orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          opacity: 0.12;
+          pointer-events: none;
+        }
+        .orb-1 {
+          width: 300px; height: 300px;
+          background: #0ea5e9;
+          top: -80px; right: -60px;
+          animation: orbFloat 8s ease-in-out infinite;
+        }
+        .orb-2 {
+          width: 250px; height: 250px;
+          background: #8b5cf6;
+          bottom: 100px; left: -80px;
+          animation: orbFloat 10s ease-in-out infinite reverse;
+        }
+        .orb-3 {
+          width: 200px; height: 200px;
+          background: #0ea5e9;
+          bottom: -50px; right: -40px;
+          animation: orbFloat 12s ease-in-out infinite;
+        }
+        @keyframes orbFloat {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-30px) scale(1.1); }
         }
 
         .top-bar {
           width: 100%;
           max-width: 480px;
           display: flex;
-          justify-content: space-between;
+          justify-content: flex-start;
           align-items: center;
+          gap: 16px;
           padding: 16px 20px;
           box-sizing: border-box;
+          position: relative;
+          z-index: 2;
         }
-        .back-btn, .lang-btn {
-          background: none;
-          border: none;
-          color: #fff;
+        .back-btn {
+          background: rgba(129,136,148,0.1);
+          border: 1px solid rgba(129,136,148,0.15);
+          color: #818894;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          transition: background 0.2s;
+          width: 40px; height: 40px;
+          border-radius: 12px;
+          transition: all 0.2s;
         }
-        .back-btn:hover, .lang-btn:hover {
-          background: rgba(255,255,255,0.1);
+        .back-btn:hover { background: rgba(129,136,148,0.2); color: #fff; }
+
+        .brand-mark {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .brand-logo {
+          height: 36px;
+          width: auto;
+          object-fit: contain;
         }
 
         .hero {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 8px 20px 28px;
+          padding: 20px 20px 10px;
           text-align: center;
-        }
-        .coins-img {
-          font-size: 40px;
-          margin-bottom: 12px;
-          display: flex;
-          gap: 4px;
-          align-items: flex-end;
-        }
-        .coin-left  { font-size: 32px; }
-        .coin-center { font-size: 46px; }
-        .coin-right { font-size: 28px; }
-        .hero-title {
-          font-size: clamp(20px, 5vw, 26px);
-          font-weight: 700;
-          margin: 0 0 6px;
-        }
-        .hero-sub {
-          font-size: 14px;
-          color: #c8d6f0;
-          margin: 0;
-        }
-
-        .login-form {
+          position: relative;
+          z-index: 2;
           width: 100%;
           max-width: 480px;
+          box-sizing: border-box;
+        }
+        .hero-logo {
+          margin-bottom: 20px;
+        }
+        .hero-logo-img {
+          width: 200px;
+          height: auto;
+          object-fit: contain;
+        }
+        .hero-sub {
+          font-size: 15px;
+          color: #818894;
+          margin: 0;
+          font-weight: 500;
+        }
+
+        /* Glass card */
+        .glass-card {
+          width: 100%;
+          max-width: 480px;
+          margin: 10px 0;
           padding: 0 20px;
           box-sizing: border-box;
+          position: relative;
+          z-index: 2;
+        }
+        .login-form {
+          background: rgba(1,4,19,0.7);
+          border: 1px solid rgba(129,136,148,0.12);
+          backdrop-filter: blur(24px);
+          border-radius: 24px;
+          padding: 32px 24px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 20px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.4);
         }
 
         .field-group {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 8px;
         }
         .field-label {
-          font-size: 14px;
-          font-weight: 500;
-          color: #c8d6f0;
+          font-size: 13px;
+          font-weight: 600;
+          color: #818894;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
         .input-wrapper {
@@ -241,24 +306,25 @@ export default function LoginPage() {
         }
         .field-input {
           width: 100%;
-          background: rgba(255,255,255,0.07);
-          border: 1px solid rgba(255,255,255,0.12);
-          border-radius: 10px;
-          padding: 14px 16px;
-          font-size: 14px;
+          background: rgba(0,7,23,0.8);
+          border: 1.5px solid rgba(129,136,148,0.15);
+          border-radius: 14px;
+          padding: 15px 18px;
+          font-size: 15px;
           color: #fff;
           outline: none;
-          transition: border-color 0.2s;
+          transition: all 0.2s;
           box-sizing: border-box;
           -webkit-appearance: none;
         }
-        .field-input::placeholder { color: rgba(255,255,255,0.3); }
+        .field-input::placeholder { color: rgba(129,136,148,0.5); }
         .field-input:focus {
-          border-color: rgba(100,180,255,0.5);
-          background: rgba(255,255,255,0.1);
+          border-color: #0ea5e9;
+          background: rgba(0,6,25,0.9);
+          box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
         }
         .field-input:-webkit-autofill {
-          -webkit-box-shadow: 0 0 0 1000px #0d2251 inset;
+          -webkit-box-shadow: 0 0 0 1000px #000717 inset;
           -webkit-text-fill-color: #fff;
         }
         .input-wrapper .field-input { padding-right: 48px; }
@@ -268,81 +334,96 @@ export default function LoginPage() {
           right: 14px;
           background: none;
           border: none;
-          color: rgba(255,255,255,0.45);
+          color: #818894;
           cursor: pointer;
           display: flex;
           align-items: center;
           padding: 0;
           transition: color 0.2s;
         }
-        .eye-btn:hover { color: #fff; }
+        .eye-btn:hover { color: #0ea5e9; }
 
         .forgot-row {
           display: flex;
           justify-content: flex-end;
-          margin-top: -6px;
+          margin-top: -8px;
         }
         .forgot-link {
           font-size: 13px;
-          color: #4db8ff;
+          color: #0ea5e9;
           text-decoration: none;
+          font-weight: 500;
+          transition: opacity 0.2s;
         }
-        .forgot-link:hover { text-decoration: underline; }
+        .forgot-link:hover { opacity: 0.8; }
 
         .login-btn {
           width: 100%;
-          padding: 15px;
-          border-radius: 10px;
+          padding: 16px;
+          border-radius: 14px;
           border: none;
-          background: linear-gradient(135deg, #2a3f6f 0%, #3a5fa8 100%);
-          color: rgba(255,255,255,0.85);
+          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+          color: #fff;
           font-size: 16px;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
-          letter-spacing: 0.5px;
-          transition: opacity 0.2s, transform 0.1s;
+          letter-spacing: 0.3px;
+          transition: all 0.2s;
           margin-top: 4px;
+          box-shadow: 0 8px 25px rgba(14,165,233,0.3);
         }
-        .login-btn:hover { opacity: 0.9; }
-        .login-btn:active { transform: scale(0.98); }
+        .login-btn:hover { box-shadow: 0 12px 35px rgba(14,165,233,0.4); transform: translateY(-1px); }
+        .login-btn:active { transform: translateY(0) scale(0.98); }
+        .login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        .btn-loading {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .spinner {
+          width: 16px; height: 16px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .divider-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .divider-line {
+          flex: 1;
+          height: 1px;
+          background: rgba(129,136,148,0.15);
+        }
+        .divider-text {
+          font-size: 12px;
+          color: #818894;
+          font-weight: 500;
+          text-transform: uppercase;
+        }
 
         .signup-text {
-          font-size: 13px;
-          color: rgba(200,214,240,0.65);
+          font-size: 14px;
+          color: #818894;
           text-align: center;
           margin: 0;
         }
         .signup-link {
-          color: #4db8ff;
+          color: #0ea5e9;
           text-decoration: none;
-          font-weight: 600;
+          font-weight: 700;
         }
         .signup-link:hover { text-decoration: underline; }
 
-        .help-btn {
-          position: fixed;
-          bottom: 24px;
-          right: 20px;
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #1e88e5, #1565c0);
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 4px 16px rgba(30,136,229,0.45);
-          transition: transform 0.2s, box-shadow 0.2s;
-          z-index: 99;
-        }
-        .help-btn:hover {
-          transform: scale(1.08);
-          box-shadow: 0 6px 22px rgba(30,136,229,0.6);
-        }
-
         @media (max-width: 360px) {
-          .hero-title { font-size: 18px; }
+          .hero-title { font-size: 22px; }
+          .login-form { padding: 24px 18px; }
         }
       `}</style>
     </div>

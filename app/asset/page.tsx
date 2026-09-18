@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 
 export default function AssetPage() {
   const router = useRouter();
@@ -19,13 +19,34 @@ export default function AssetPage() {
           setUser(docSnap.data());
         }
       });
-      // Fetch History
-      const q = query(collection(db, "users", uid, "transactions"), orderBy("timestamp", "desc"));
-      getDocs(q).then(snap => {
-        const txs: any[] = [];
-        snap.forEach(d => txs.push(d.data()));
-        setHistory(txs);
-      }).catch(console.error);
+      // Fetch History and sync true status
+      const fetchHistory = async () => {
+        try {
+          const q = query(collection(db, "users", uid, "transactions"), orderBy("timestamp", "desc"));
+          const snap = await getDocs(q);
+          const txs: any[] = [];
+          snap.forEach(d => txs.push({ id: d.id, ...d.data() }));
+
+          const wq = query(collection(db, "withdrawals"), where("uid", "==", uid));
+          const wSnap = await getDocs(wq);
+          const globalWithdrawals = wSnap.docs.map(d => d.data());
+
+          txs.forEach(tx => {
+            if (tx.type === 'withdrawal' && tx.status === 'processing') {
+              const matched = globalWithdrawals.find(w => w.amount === tx.amount && w.status !== 'processing');
+              if (matched) {
+                tx.status = matched.status;
+              }
+            }
+          });
+
+          setHistory(txs);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      fetchHistory();
     }
   }, []);
 
@@ -94,7 +115,7 @@ export default function AssetPage() {
             </div>
             <span className="action-label">Deposit</span>
           </div>
-          <div className="action-item">
+          <div className="action-item" style={{ cursor: 'pointer' }} onClick={() => router.push('/withdraw')}>
             <div className="action-icon-wrapper">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -137,7 +158,10 @@ export default function AssetPage() {
                       )}
                     </svg>
                   </div>
-                  <span className="coin-name">{tx.type === 'deposit' ? 'Admin Deposit' : 'Withdrawal'} ({tx.token})</span>
+                  <span className="coin-name">
+                    {tx.type === 'deposit' ? 'Admin Deposit' : 'Withdrawal'} ({tx.token})
+                    {tx.status && <span style={{ marginLeft: 8, fontSize: '11px', textTransform: 'capitalize', color: tx.status === 'processing' ? '#f59e0b' : tx.status === 'approved' ? '#10b981' : '#ef4444', background: tx.status === 'processing' ? '#fffbeb' : tx.status === 'approved' ? '#ecfdf5' : '#fef2f2', padding: '2px 6px', borderRadius: '4px', border: `1px solid ${tx.status === 'processing' ? '#fcd34d' : tx.status === 'approved' ? '#6ee7b7' : '#fca5a5'}` }}>{tx.status}</span>}
+                  </span>
                 </div>
                 <div className="asset-right">
                   <span className="coin-bal" style={{ color: tx.type === 'deposit' ? '#10b981' : '#ef4444' }}>
@@ -263,11 +287,11 @@ export default function AssetPage() {
         .asset-root {
           min-height: 100vh;
           width: 100%;
-          background: linear-gradient(135deg, #f6f9fc 0%, #eef2f6 100%);
+          background: #00030D;
           display: flex;
           flex-direction: column;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          color: #0f172a;
+          color: #ffffff;
           position: relative;
           padding-bottom: 90px;
         }
@@ -281,7 +305,7 @@ export default function AssetPage() {
         .nav-title {
           font-size: 18px;
           font-weight: 700;
-          color: #0f172a;
+          color: #ffffff;
           margin: 0;
         }
 
@@ -293,12 +317,12 @@ export default function AssetPage() {
         }
 
         .tabs-container {
-          background: #ffffff;
+          background: #010413;
           border-radius: 30px;
           padding: 4px;
           display: flex;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-          border: 1px solid #f1f5f9;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+          border: 1px solid rgba(129,136,148,0.15);
         }
         .tab {
           flex: 1;
@@ -308,7 +332,7 @@ export default function AssetPage() {
           border-radius: 24px;
           font-size: 15px;
           font-weight: 700;
-          color: #64748b;
+          color: #818894;
           cursor: pointer;
           transition: all 0.2s;
         }
@@ -319,45 +343,27 @@ export default function AssetPage() {
         }
 
         .total-assets-card {
-          background: #ffffff;
+          background: #010413;
           border-radius: 24px;
           padding: 24px 20px;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 12px;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.03);
-          border: 1px solid #e2e8f0;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+          border: 1px solid rgba(129,136,148,0.15);
           position: relative;
           overflow: hidden;
         }
-        .total-assets-card::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 4px;
-            background: linear-gradient(90deg, #0ea5e9, #38bdf8);
-        }
-        
-        .card-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
         .card-title {
           font-size: 14px;
-          color: #64748b;
+          color: #818894;
           font-weight: 600;
-        }
-        
-        .card-main-val {
-          display: flex;
-          align-items: baseline;
-          gap: 8px;
         }
         .amount {
           font-size: 34px;
           font-weight: 800;
-          color: #0f172a;
+          color: #ffffff;
           letter-spacing: -1px;
         }
         .currency {
@@ -390,23 +396,23 @@ export default function AssetPage() {
         }
         .inner-box {
           flex: 1;
-          background: #f8fafc;
+          background: #000717;
           border-radius: 16px;
           padding: 16px;
           display: flex;
           flex-direction: column;
           gap: 4px;
-          border: 1px solid #f1f5f9;
+          border: 1px solid rgba(129,136,148,0.15);
         }
         .box-title {
           font-size: 12px;
-          color: #64748b;
+          color: #818894;
           font-weight: 600;
         }
         .box-val {
           font-size: 16px;
           font-weight: 800;
-          color: #0f172a;
+          color: #ffffff;
         }
 
         .action-row {
@@ -435,26 +441,26 @@ export default function AssetPage() {
         .action-item:hover .action-icon-wrapper { transform: translateY(-3px); }
         .action-label {
           font-size: 13px;
-          color: #334155;
+          color: #818894;
           font-weight: 700;
         }
 
         .asset-list-card {
-          background: #ffffff;
+          background: #010413;
           border-radius: 20px;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.02);
+          border: 1px solid rgba(129,136,148,0.15);
+          box-shadow: 0 8px 30px rgba(0,0,0,0.3);
           display: flex;
           flex-direction: column;
         }
         .asset-list-header {
           padding: 20px;
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid rgba(129,136,148,0.12);
         }
         .asset-list-header span {
           font-size: 14px;
           font-weight: 700;
-          color: #64748b;
+          color: #818894;
         }
 
         .asset-row {
@@ -462,59 +468,36 @@ export default function AssetPage() {
           justify-content: space-between;
           align-items: center;
           padding: 16px 20px;
-          border-bottom: 1px solid #f1f5f9;
-        }
-        .asset-left {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .coin-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          border-bottom: 1px solid rgba(129,136,148,0.1);
         }
         .coin-name {
           font-size: 16px;
           font-weight: 800;
-          color: #0f172a;
-        }
-        .asset-right {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 2px;
+          color: #ffffff;
         }
         .coin-bal {
           font-size: 16px;
           font-weight: 800;
-          color: #0f172a;
+          color: #ffffff;
         }
         .coin-usd {
           font-size: 12px;
           font-weight: 600;
-          color: #94a3b8;
+          color: #818894;
         }
 
-        /* Bottom Nav styles */
         .bottom-nav {
           position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: rgba(255,255,255,0.95);
-          backdrop-filter: blur(10px);
-          border-top: 1px solid rgba(0,0,0,0.05);
+          bottom: 0; left: 0; right: 0;
+          background: rgba(1,4,19,0.97);
+          backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(129,136,148,0.15);
           display: flex;
           justify-content: space-around;
           align-items: flex-end;
           padding: 10px 10px 24px;
           z-index: 100;
-          box-shadow: 0 -5px 25px rgba(0,0,0,0.03);
+          box-shadow: 0 -5px 30px rgba(0,0,0,0.4);
         }
         .nav-item {
           display: flex;
@@ -523,30 +506,21 @@ export default function AssetPage() {
           gap: 6px;
           background: none;
           border: none;
-          color: #94a3b8;
+          color: #818894;
           cursor: pointer;
           font-size: 11.5px;
           font-weight: 600;
         }
-        .nav-item.active {
-          color: #0ea5e9;
-        }
-        .center-mining-wrapper {
-          position: relative;
-          top: -24px;
-        }
+        .nav-item.active { color: #0ea5e9; }
+        .center-mining-wrapper { position: relative; top: -24px; }
         .mining-btn {
-          width: 64px;
-          height: 64px;
+          width: 64px; height: 64px;
           border-radius: 50%;
           background: linear-gradient(135deg, #0ea5e9, #0284c7);
-          border: 6px solid #f8fafc;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          border: 6px solid #00030D;
+          display: flex; align-items: center; justify-content: center;
           box-shadow: 0 8px 25px rgba(14,165,233,0.4);
-          cursor: pointer;
-          margin-bottom: 6px;
+          cursor: pointer; margin-bottom: 6px;
         }
       `}</style>
     </div>

@@ -3,11 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 export default function ProfilePage() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
+    const [oldLoginPass, setOldLoginPass] = useState('');
+    const [newLoginPass, setNewLoginPass] = useState('');
+    const [oldFundPass, setOldFundPass] = useState('');
+    const [newFundPass, setNewFundPass] = useState('');
 
     useEffect(() => {
         const uid = localStorage.getItem("nexmine_uid");
@@ -42,16 +46,46 @@ export default function ProfilePage() {
         }
     };
 
+    const handleUpdateLoginPassword = async () => {
+        if (!newLoginPass.trim()) return;
+        if (oldLoginPass.trim() !== user.password) {
+            alert("Incorrect old password!");
+            return;
+        }
+        try {
+            await updateDoc(doc(db, "users", user.uid), { password: newLoginPass.trim() });
+            setUser({ ...user, password: newLoginPass.trim() });
+            alert("Login password updated successfully!");
+            setOldLoginPass('');
+            setNewLoginPass('');
+        } catch (err: any) {
+            alert("Failed to update password: " + err.message);
+        }
+    };
+
+    const handleUpdateFundPassword = async () => {
+        if (!newFundPass.trim()) return;
+        if (user.fundPassword && oldFundPass.trim() !== user.fundPassword) {
+            alert("Incorrect old fund password!");
+            return;
+        }
+        try {
+            await updateDoc(doc(db, "users", user.uid), { fundPassword: newFundPass.trim() });
+            setUser({ ...user, fundPassword: newFundPass.trim() });
+            alert("Fund password updated successfully!");
+            setOldFundPass('');
+            setNewFundPass('');
+        } catch (err: any) {
+            alert("Failed to update password: " + err.message);
+        }
+    };
+
     return (
         <div className="profile-root">
             {/* Top Navbar */}
             <header className="top-nav">
                 <div className="logo-section">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#0ea5e9" />
-                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="logo-text">Nexmine</span>
+                    <img src="/nexmine-logo.png" alt="Nexmine" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
                 </div>
                 <div className="nav-icons">
                     <button className="icon-btn" aria-label="Language">
@@ -74,9 +108,9 @@ export default function ProfilePage() {
                 {/* Profile Card */}
                 <div className="profile-card">
                     <div className="profile-avatar">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#0ea5e9" />
-                            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
                         </svg>
                     </div>
                     <div className="profile-info">
@@ -133,7 +167,7 @@ export default function ProfilePage() {
                         <div className="action-icon-wrapper" style={{ background: 'linear-gradient(135deg, #1f3a60, #2c5282)' }}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                         </div>
-                        <span className="action-label">My Earnings</span>
+                        <span className="action-label">{(user?.totalProfit || 0).toFixed(4)}$</span>
                     </div>
                     <div className="action-item" style={{ cursor: 'pointer' }} onClick={() => router.push('/team')}>
                         <div className="action-icon-wrapper" style={{ background: 'linear-gradient(135deg, #1f3a60, #2c5282)' }}>
@@ -168,14 +202,14 @@ export default function ProfilePage() {
                     <div className="stats-row" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <div className="stat-col">
                             <span className="stat-label">Total Profit</span>
-                            <span className="stat-val">704.2562$</span>
+                            <span className="stat-val">{(user?.totalProfit || 0).toFixed(4)}$</span>
                         </div>
                         <div className="stat-col flex-end">
                             <div className="stat-header">
                                 <span className="stat-label">Today Profit</span>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a7c9d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="chevron-sm"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </div>
-                            <span className="stat-val">3.4538$</span>
+                            <span className="stat-val">{(user?.todayProfit || 0).toFixed(4)}$</span>
                         </div>
                     </div>
 
@@ -203,26 +237,62 @@ export default function ProfilePage() {
                         </div>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7c9d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
-                    <div className="setting-item">
-                        <div className="setting-left">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92a2bd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                            <span>Email</span>
+                    <div className="setting-card">
+                        <div className="setting-header">
+                            <div className="setting-left">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92a2bd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>Fund Password</span>
+                            </div>
                         </div>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7c9d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <div className="setting-field-col">
+                            {user?.fundPassword && (
+                                <input
+                                    type="password"
+                                    placeholder="Enter Old Fund Password"
+                                    className="setting-input"
+                                    value={oldFundPass}
+                                    onChange={e => setOldFundPass(e.target.value)}
+                                />
+                            )}
+                            <input
+                                type="password"
+                                placeholder={user?.fundPassword ? "Enter New Fund Password" : "Set New Fund Password"}
+                                className="setting-input"
+                                value={newFundPass}
+                                onChange={e => setNewFundPass(e.target.value)}
+                            />
+                            <button className="setting-btn" style={{ width: '100%', marginTop: '4px' }} onClick={handleUpdateFundPassword}>
+                                {user?.fundPassword ? 'Update Password' : 'Set Password'}
+                            </button>
+                        </div>
                     </div>
-                    <div className="setting-item">
-                        <div className="setting-left">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92a2bd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            <span>Fund Password</span>
+
+                    <div className="setting-card">
+                        <div className="setting-header">
+                            <div className="setting-left">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92a2bd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>Login Password</span>
+                            </div>
                         </div>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7c9d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </div>
-                    <div className="setting-item">
-                        <div className="setting-left">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92a2bd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            <span>Login Password</span>
+                        <div className="setting-field-col">
+                            <input
+                                type="password"
+                                placeholder="Enter Old Login Password"
+                                className="setting-input"
+                                value={oldLoginPass}
+                                onChange={e => setOldLoginPass(e.target.value)}
+                            />
+                            <input
+                                type="password"
+                                placeholder="Enter New Login Password"
+                                className="setting-input"
+                                value={newLoginPass}
+                                onChange={e => setNewLoginPass(e.target.value)}
+                            />
+                            <button className="setting-btn" style={{ width: '100%', marginTop: '4px' }} onClick={handleUpdateLoginPassword}>
+                                Update Login Password
+                            </button>
                         </div>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7c9d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                     <div className="setting-item" onClick={handleLogout} style={{ border: '1px solid #e2e8f0', background: '#334155' }}>
                         <div className="setting-left">
@@ -288,13 +358,13 @@ export default function ProfilePage() {
         .profile-root {
           min-height: 100vh;
           width: 100%;
-          background: linear-gradient(135deg, #f6f9fc 0%, #eef2f6 100%);
+          background: #00030D;
           display: flex;
           flex-direction: column;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          color: #0f172a;
+          color: #ffffff;
           position: relative;
-          padding-bottom: 90px;
+          padding-bottom: 140px;
         }
 
         .top-nav {
@@ -311,7 +381,7 @@ export default function ProfilePage() {
         .logo-text {
           font-size: 22px;
           font-weight: 800;
-          color: #0f172a;
+          color: #ffffff;
           letter-spacing: -0.5px;
         }
         .nav-icons {
@@ -319,16 +389,16 @@ export default function ProfilePage() {
           gap: 12px;
         }
         .icon-btn {
-          background: #ffffff;
-          border: 1px solid rgba(0,0,0,0.05);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+          background: #010413;
+          border: 1px solid rgba(129,136,148,0.2);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
           border-radius: 50%;
           width: 42px;
           height: 42px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #475569;
+          color: #818894;
           cursor: pointer;
           transition: transform 0.2s;
         }
@@ -342,26 +412,26 @@ export default function ProfilePage() {
         }
 
         .profile-card {
-          background: #ffffff;
+          background: #010413;
           border-radius: 20px;
           padding: 20px;
           display: flex;
           align-items: center;
           gap: 16px;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+          box-shadow: 0 10px 25px rgba(0,0,0,0.3);
           position: relative;
-          border: 1px solid #e0f2fe;
+          border: 1px solid rgba(129,136,148,0.15);
         }
         .profile-avatar {
           width: 68px;
           height: 68px;
           border-radius: 50%;
-          background: #f8fafc;
-          border: 3px solid #e0f2fe;
+          background: #000717;
+          border: 3px solid rgba(14,165,233,0.3);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 12px rgba(14,165,233,0.1);
+          box-shadow: 0 4px 12px rgba(14,165,233,0.15);
           flex-shrink: 0;
         }
         .profile-info {
@@ -378,26 +448,26 @@ export default function ProfilePage() {
         .username {
            font-size: 19px;
            font-weight: 800;
-           color: #0f172a;
+           color: #ffffff;
            margin: 0;
         }
         .chevron-icon {
-           color: #94a3b8;
+           color: #818894;
         }
         .badges-row {
            display: flex;
            gap: 8px;
         }
         .badge {
-           background: #f0f9ff;
-           border: 1px solid #bae6fd;
+           background: rgba(14,165,233,0.1);
+           border: 1px solid rgba(14,165,233,0.25);
            border-radius: 12px;
            padding: 4px 10px;
            display: flex;
            align-items: center;
            gap: 6px;
            font-size: 10.5px;
-           color: #0284c7;
+           color: #0ea5e9;
            font-weight: 600;
         }
 
@@ -407,16 +477,16 @@ export default function ProfilePage() {
            gap: 12px;
         }
         .banner-card {
-           background: #ffffff;
+           background: #010413;
            border-radius: 20px;
            padding: 16px;
            display: flex;
            justify-content: space-between;
-           border: 1px solid #e2e8f0;
+           border: 1px solid rgba(129,136,148,0.15);
            min-height: 80px;
            position: relative;
            overflow: hidden;
-           box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .banner-content {
            display: flex;
@@ -428,7 +498,7 @@ export default function ProfilePage() {
            font-weight: 800;
            font-size: 14px;
            line-height: 1.2;
-           color: #1e293b;
+           color: #ffffff;
         }
         .chevron-sm {
            margin-top: 8px;
@@ -469,18 +539,18 @@ export default function ProfilePage() {
         .action-item:hover .action-icon-wrapper { transform: translateY(-3px); }
         .action-label {
           font-size: 12px;
-          color: #475569;
+          color: #818894;
           font-weight: 600;
         }
 
         .stats-card {
-           background: #ffffff;
+           background: #010413;
            border-radius: 20px;
-           border: 1px solid #e2e8f0;
+           border: 1px solid rgba(129,136,148,0.15);
            padding: 0;
            display: flex;
            flex-direction: column;
-           box-shadow: 0 8px 24px rgba(0,0,0,0.02);
+           box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
         .stats-row {
            display: flex;
@@ -504,13 +574,13 @@ export default function ProfilePage() {
         }
         .stat-label {
            font-size: 13px;
-           color: #64748b;
+           color: #818894;
            font-weight: 500;
         }
         .stat-val {
            font-size: 18px;
            font-weight: 800;
-           color: #0f172a;
+           color: #ffffff;
         }
         .text-blue {
            color: #0ea5e9;
@@ -522,20 +592,67 @@ export default function ProfilePage() {
            gap: 8px;
         }
         .setting-item {
-           background: #ffffff;
+           background: #010413;
            display: flex;
            align-items: center;
            justify-content: space-between;
            padding: 18px 20px;
            border-radius: 16px;
-           border: 1px solid #e2e8f0;
+           border: 1px solid rgba(129,136,148,0.15);
            cursor: pointer;
-           box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+           box-shadow: 0 2px 8px rgba(0,0,0,0.2);
            transition: transform 0.2s, box-shadow 0.2s;
         }
+
+        .setting-card {
+          background: #010413;
+          border: 1px solid rgba(129,136,148,0.15);
+          border-radius: 16px;
+          padding: 16px 20px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .setting-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+        .setting-field-row {
+          display: flex;
+          gap: 10px;
+        }
+        .setting-field-col {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .setting-input {
+          flex: 1;
+          background: #000717;
+          border: 1px solid rgba(129,136,148,0.2);
+          border-radius: 12px;
+          padding: 10px 14px;
+          color: #ffffff;
+          font-size: 14px;
+          outline: none;
+        }
+        .setting-input:focus {
+          border-color: #0ea5e9;
+        }
+        .setting-btn {
+          background: linear-gradient(135deg, #0ea5e9, #0284c7);
+          color: #ffffff;
+          border: none;
+          border-radius: 12px;
+          padding: 0 20px;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+        }
+
         .setting-item:hover {
            transform: translateY(-2px);
-           box-shadow: 0 6px 16px rgba(0,0,0,0.03);
+           box-shadow: 0 6px 16px rgba(0,0,0,0.3);
         }
         .setting-left {
            display: flex;
@@ -543,27 +660,25 @@ export default function ProfilePage() {
            gap: 16px;
            font-size: 15px;
            font-weight: 600;
-           color: #334155;
+           color: #ffffff;
         }
         .setting-left svg {
            color: #0ea5e9;
         }
 
-        /* Bottom Nav styles matching Dashboard */
+        /* Bottom Nav */
         .bottom-nav {
           position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: rgba(255,255,255,0.95);
-          backdrop-filter: blur(10px);
-          border-top: 1px solid rgba(0,0,0,0.05);
+          bottom: 0; left: 0; right: 0;
+          background: rgba(1,4,19,0.97);
+          backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(129,136,148,0.15);
           display: flex;
           justify-content: space-around;
           align-items: flex-end;
           padding: 10px 10px 24px;
           z-index: 100;
-          box-shadow: 0 -5px 25px rgba(0,0,0,0.03);
+          box-shadow: 0 -5px 30px rgba(0,0,0,0.4);
         }
         .nav-item {
           display: flex;
@@ -572,30 +687,21 @@ export default function ProfilePage() {
           gap: 6px;
           background: none;
           border: none;
-          color: #94a3b8;
+          color: #818894;
           cursor: pointer;
           font-size: 11.5px;
           font-weight: 600;
         }
-        .nav-item.active {
-          color: #0ea5e9;
-        }
-        .center-mining-wrapper {
-          position: relative;
-          top: -24px;
-        }
+        .nav-item.active { color: #0ea5e9; }
+        .center-mining-wrapper { position: relative; top: -24px; }
         .mining-btn {
-          width: 64px;
-          height: 64px;
+          width: 64px; height: 64px;
           border-radius: 50%;
           background: linear-gradient(135deg, #0ea5e9, #0284c7);
-          border: 6px solid #f8fafc;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          border: 6px solid #00030D;
+          display: flex; align-items: center; justify-content: center;
           box-shadow: 0 8px 25px rgba(14,165,233,0.4);
-          cursor: pointer;
-          margin-bottom: 6px;
+          cursor: pointer; margin-bottom: 6px;
         }
       `}</style>
         </div>
