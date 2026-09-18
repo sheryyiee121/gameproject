@@ -167,7 +167,7 @@ export default function MiningPage() {
                 {/* Orb Graphic */}
                 <div className="orb-container">
                     <div className="shield-blob">
-                        <img src="/nexmine-logo.png" alt="Nexmine AI" className="orb-logo" />
+                        <img src="/nexmine-ai-logo.png" alt="Nexmine AI" className="orb-logo" />
                     </div>
                 </div>
 

@@ -85,7 +85,7 @@ export default function ProfilePage() {
             {/* Top Navbar */}
             <header className="top-nav">
                 <div className="logo-section">
-                    <img src="/nexmine-logo.png" alt="Nexmine" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+                    <img src="/nexmine-ai-logo.png" alt="Nexmine" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
                 </div>
                 <div className="nav-icons">
                     <button className="icon-btn" aria-label="Language">

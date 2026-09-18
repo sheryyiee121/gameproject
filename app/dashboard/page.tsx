@@ -62,7 +62,7 @@ export default function DashboardPage() {
       {/* Top Navbar */}
       <header className="top-nav">
         <div className="logo-section">
-          <img src="/nexmine-logo.png" alt="Nexmine AI" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+          <img src="/nexmine-ai-logo.png" alt="Nexmine AI" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
         </div>
         <div className="nav-icons">
           <a href="https://t.me/Nexminesupport1" target="_blank" rel="noopener noreferrer" className="icon-btn" aria-label="Customer Support">

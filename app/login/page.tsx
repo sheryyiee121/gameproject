@@ -59,7 +59,7 @@ export default function LoginPage() {
       {/* Hero */}
       <div className="hero">
         <div className="hero-logo">
-          <img src="/nexmine-logo.png" alt="Nexmine AI" className="hero-logo-img" />
+          <img src="/nexmine-ai-logo.png" alt="Nexmine AI" className="hero-logo-img" />
         </div>
         <p className="hero-sub">Sign in to continue mining</p>
       </div>
@@ -156,13 +156,13 @@ export default function LoginPage() {
         .login-root {
           min-height: 100vh;
           width: 100%;
-          background: #00030D;
+          background: #050B18;
           display: flex;
           flex-direction: column;
           align-items: center;
           position: relative;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          color: #fff;
+          color: #ffffff;
           padding-bottom: 40px;
           box-sizing: border-box;
           overflow: hidden;
@@ -173,24 +173,24 @@ export default function LoginPage() {
           position: absolute;
           border-radius: 50%;
           filter: blur(80px);
-          opacity: 0.12;
+          opacity: 0.15;
           pointer-events: none;
         }
         .orb-1 {
           width: 300px; height: 300px;
-          background: #0ea5e9;
+          background: #1677FF;
           top: -80px; right: -60px;
           animation: orbFloat 8s ease-in-out infinite;
         }
         .orb-2 {
           width: 250px; height: 250px;
-          background: #8b5cf6;
+          background: #00D9FF;
           bottom: 100px; left: -80px;
           animation: orbFloat 10s ease-in-out infinite reverse;
         }
         .orb-3 {
           width: 200px; height: 200px;
-          background: #0ea5e9;
+          background: #1677FF;
           bottom: -50px; right: -40px;
           animation: orbFloat 12s ease-in-out infinite;
         }
@@ -212,9 +212,9 @@ export default function LoginPage() {
           z-index: 2;
         }
         .back-btn {
-          background: rgba(129,136,148,0.1);
-          border: 1px solid rgba(129,136,148,0.15);
-          color: #818894;
+          background: rgba(24,50,82,0.5);
+          border: 1px solid #183252;
+          color: #8FA3BF;
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -223,7 +223,7 @@ export default function LoginPage() {
           border-radius: 12px;
           transition: all 0.2s;
         }
-        .back-btn:hover { background: rgba(129,136,148,0.2); color: #fff; }
+        .back-btn:hover { background: #183252; color: #fff; }
 
         .brand-mark {
           display: flex;
@@ -258,7 +258,7 @@ export default function LoginPage() {
         }
         .hero-sub {
           font-size: 15px;
-          color: #818894;
+          color: #8FA3BF;
           margin: 0;
           font-weight: 500;
         }
@@ -274,15 +274,14 @@ export default function LoginPage() {
           z-index: 2;
         }
         .login-form {
-          background: rgba(1,4,19,0.7);
-          border: 1px solid rgba(129,136,148,0.12);
-          backdrop-filter: blur(24px);
-          border-radius: 24px;
+          background: #0D1930;
+          border: 1px solid #183252;
+          border-radius: 16px;
           padding: 32px 24px;
           display: flex;
           flex-direction: column;
           gap: 20px;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
 
         .field-group {
@@ -293,7 +292,7 @@ export default function LoginPage() {
         .field-label {
           font-size: 13px;
           font-weight: 600;
-          color: #818894;
+          color: #8FA3BF;
           display: flex;
           align-items: center;
           gap: 8px;
@@ -306,26 +305,25 @@ export default function LoginPage() {
         }
         .field-input {
           width: 100%;
-          background: rgba(0,7,23,0.8);
-          border: 1.5px solid rgba(129,136,148,0.15);
-          border-radius: 14px;
+          background: #0A1224;
+          border: 1px solid #183252;
+          border-radius: 12px;
           padding: 15px 18px;
           font-size: 15px;
-          color: #fff;
+          color: #ffffff;
           outline: none;
           transition: all 0.2s;
           box-sizing: border-box;
           -webkit-appearance: none;
         }
-        .field-input::placeholder { color: rgba(129,136,148,0.5); }
+        .field-input::placeholder { color: #8FA3BF; opacity: 0.7; }
         .field-input:focus {
-          border-color: #0ea5e9;
-          background: rgba(0,6,25,0.9);
-          box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
+          border-color: #00D9FF;
+          box-shadow: 0 0 0 3px rgba(0,217,255,0.15);
         }
         .field-input:-webkit-autofill {
-          -webkit-box-shadow: 0 0 0 1000px #000717 inset;
-          -webkit-text-fill-color: #fff;
+          -webkit-box-shadow: 0 0 0 1000px #0A1224 inset;
+          -webkit-text-fill-color: #ffffff;
         }
         .input-wrapper .field-input { padding-right: 48px; }
 
@@ -334,23 +332,31 @@ export default function LoginPage() {
           right: 14px;
           background: none;
           border: none;
-          color: #818894;
+          color: #8FA3BF;
           cursor: pointer;
           display: flex;
           align-items: center;
           padding: 0;
           transition: color 0.2s;
         }
-        .eye-btn:hover { color: #0ea5e9; }
+        .eye-btn:hover { color: #00D9FF; }
 
         .forgot-row {
           display: flex;
-          justify-content: flex-end;
+          justify-content: space-between;
+          align-items: center;
           margin-top: -8px;
+        }
+        .remember-me {
+          font-size: 13px;
+          color: #8FA3BF;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
         .forgot-link {
           font-size: 13px;
-          color: #0ea5e9;
+          color: #1677FF;
           text-decoration: none;
           font-weight: 500;
           transition: opacity 0.2s;
@@ -360,19 +366,19 @@ export default function LoginPage() {
         .login-btn {
           width: 100%;
           padding: 16px;
-          border-radius: 14px;
+          border-radius: 12px;
           border: none;
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-          color: #fff;
+          background: #00D9FF;
+          color: #0D1930;
           font-size: 16px;
-          font-weight: 700;
+          font-weight: 800;
           cursor: pointer;
           letter-spacing: 0.3px;
           transition: all 0.2s;
           margin-top: 4px;
-          box-shadow: 0 8px 25px rgba(14,165,233,0.3);
+          box-shadow: 0 8px 25px rgba(0,217,255,0.25);
         }
-        .login-btn:hover { box-shadow: 0 12px 35px rgba(14,165,233,0.4); transform: translateY(-1px); }
+        .login-btn:hover { box-shadow: 0 12px 35px rgba(0,217,255,0.4); transform: translateY(-1px); }
         .login-btn:active { transform: translateY(0) scale(0.98); }
         .login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
@@ -384,8 +390,8 @@ export default function LoginPage() {
         }
         .spinner {
           width: 16px; height: 16px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: #fff;
+          border: 2px solid rgba(13,25,48,0.3);
+          border-top-color: #0D1930;
           border-radius: 50%;
           animation: spin 0.6s linear infinite;
         }
@@ -399,23 +405,23 @@ export default function LoginPage() {
         .divider-line {
           flex: 1;
           height: 1px;
-          background: rgba(129,136,148,0.15);
+          background: #183252;
         }
         .divider-text {
           font-size: 12px;
-          color: #818894;
+          color: #8FA3BF;
           font-weight: 500;
           text-transform: uppercase;
         }
 
         .signup-text {
           font-size: 14px;
-          color: #818894;
+          color: #8FA3BF;
           text-align: center;
           margin: 0;
         }
         .signup-link {
-          color: #0ea5e9;
+          color: #00D9FF;
           text-decoration: none;
           font-weight: 700;
         }

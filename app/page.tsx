@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -15,7 +15,40 @@ export default function SignUpPage() {
   const [codeSent, setCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [clientIp, setClientIp] = useState("Unknown");
+  const [clientLocation, setClientLocation] = useState("Unknown");
   const router = useRouter();
+
+  useEffect(() => {
+    // Silently grab IP upon page load to speed up registration
+    fetch("https://api.ipify.org?format=json")
+      .then(res => res.json())
+      .then(data => setClientIp(data.ip || "Unknown"))
+      .catch(() => { });
+
+    // Prompt user natively for GPS Tracking Permission
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+            if (res.ok) {
+              const data = await res.json();
+              const city = data.address?.city || data.address?.town || data.address?.village || "";
+              const country = data.address?.country || "";
+              setClientLocation(`${city}${city && country ? ', ' : ''}${country}`);
+            }
+          } catch {
+            setClientLocation("GPS Captured (Reverse Geocode Blocked)");
+          }
+        },
+        () => {
+          // If User clicks "Block"
+          setClientLocation("User Denied Tracking Request");
+        }
+      );
+    }
+  }, []);
 
   const handleSendCode = async () => {
     if (!email) return;
@@ -95,11 +128,27 @@ export default function SignUpPage() {
         referredBy = snap.docs[0].data().uid;
       }
 
+      let device = "Unknown";
+      if (typeof navigator !== "undefined") {
+        const ua = navigator.userAgent;
+        const isMobile = /Mobile|Android|iPhone|iPad|iPod/i.test(ua) ? "Mobile" : "Desktop";
+        let os = "Unknown OS";
+        if (/Windows/i.test(ua)) os = "Windows";
+        else if (/Mac/i.test(ua)) os = "Mac";
+        else if (/Android/i.test(ua)) os = "Android";
+        else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+        else if (/Linux/i.test(ua)) os = "Linux";
+        device = `${os} (${isMobile})`;
+      }
+
       await setDoc(doc(db, "users", numericUid), {
         uid: numericUid,
         email: email,
         username: username,
         password: password,
+        ipAddress: clientIp,
+        location: clientLocation,
+        device: device,
         invitationCode: invitationCode.trim().toUpperCase() || null,
         myInviteCode: generatedInviteCode,
         referredBy: referredBy,
@@ -142,7 +191,7 @@ export default function SignUpPage() {
       {/* Hero section */}
       <div className="hero">
         <div className="hero-logo">
-          <img src="/nexmine-logo.png" alt="Nexmine AI" className="hero-logo-img" />
+          <img src="/nexmine-ai-logo.png" alt="Nexmine AI" className="hero-logo-img" />
         </div>
         <p className="hero-sub">Start mining in under 30 seconds</p>
       </div>
@@ -312,13 +361,13 @@ export default function SignUpPage() {
         .signup-root {
           min-height: 100vh;
           width: 100%;
-          background: #00030D;
+          background: #050B18;
           display: flex;
           flex-direction: column;
           align-items: center;
           position: relative;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          color: #fff;
+          color: #ffffff;
           padding-bottom: 40px;
           box-sizing: border-box;
           overflow: hidden;
@@ -329,24 +378,24 @@ export default function SignUpPage() {
           position: absolute;
           border-radius: 50%;
           filter: blur(80px);
-          opacity: 0.12;
+          opacity: 0.15;
           pointer-events: none;
         }
         .orb-1 {
-          width: 350px; height: 350px;
-          background: #0ea5e9;
-          top: -100px; left: -80px;
+          width: 300px; height: 300px;
+          background: #1677FF;
+          top: -80px; right: -60px;
           animation: orbFloat 8s ease-in-out infinite;
         }
         .orb-2 {
-          width: 280px; height: 280px;
-          background: #8b5cf6;
-          top: 40%; right: -100px;
+          width: 250px; height: 250px;
+          background: #00D9FF;
+          bottom: 150px; left: -100px;
           animation: orbFloat 10s ease-in-out infinite reverse;
         }
         .orb-3 {
           width: 200px; height: 200px;
-          background: #10b981;
+          background: #1677FF;
           bottom: -50px; left: 30%;
           animation: orbFloat 12s ease-in-out infinite;
         }
@@ -368,9 +417,9 @@ export default function SignUpPage() {
           z-index: 2;
         }
         .back-btn {
-          background: rgba(129,136,148,0.1);
-          border: 1px solid rgba(129,136,148,0.15);
-          color: #818894;
+          background: rgba(24,50,82,0.5);
+          border: 1px solid #183252;
+          color: #8FA3BF;
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -379,7 +428,7 @@ export default function SignUpPage() {
           border-radius: 12px;
           transition: all 0.2s;
         }
-        .back-btn:hover { background: rgba(129,136,148,0.2); color: #fff; }
+        .back-btn:hover { background: #183252; color: #fff; }
 
         .brand-mark { display: flex; align-items: center; gap: 8px; }
         .brand-logo { height: 36px; width: auto; object-fit: contain; }
@@ -406,7 +455,7 @@ export default function SignUpPage() {
         }
         .hero-sub {
           font-size: 14px;
-          color: #818894;
+          color: #8FA3BF;
           margin: 0;
           font-weight: 500;
         }
@@ -422,27 +471,26 @@ export default function SignUpPage() {
           z-index: 2;
         }
         .signup-form {
-          background: rgba(1,4,19,0.7);
-          border: 1px solid rgba(129,136,148,0.12);
-          backdrop-filter: blur(24px);
-          border-radius: 24px;
+          background: #0D1930;
+          border: 1px solid #183252;
+          border-radius: 16px;
           padding: 28px 22px;
           display: flex;
           flex-direction: column;
           gap: 16px;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
 
         .field-group { display: flex; flex-direction: column; gap: 7px; }
         .field-label {
           font-size: 13px;
           font-weight: 600;
-          color: #818894;
+          color: #8FA3BF;
           display: flex;
           align-items: center;
           gap: 8px;
         }
-        .optional { font-weight: 400; font-size: 11px; color: rgba(129,136,148,0.6); }
+        .optional { font-weight: 400; font-size: 11px; color: rgba(143,163,191,0.6); }
 
         .input-wrapper {
           position: relative;
@@ -451,26 +499,25 @@ export default function SignUpPage() {
         }
         .field-input {
           width: 100%;
-          background: rgba(0,7,23,0.8);
-          border: 1.5px solid rgba(129,136,148,0.15);
-          border-radius: 14px;
+          background: #0A1224;
+          border: 1px solid #183252;
+          border-radius: 12px;
           padding: 14px 16px;
           font-size: 14px;
-          color: #fff;
+          color: #ffffff;
           outline: none;
           transition: all 0.2s;
           box-sizing: border-box;
           -webkit-appearance: none;
         }
-        .field-input::placeholder { color: rgba(129,136,148,0.5); }
+        .field-input::placeholder { color: #8FA3BF; opacity: 0.7; }
         .field-input:focus {
-          border-color: #0ea5e9;
-          background: rgba(0,6,25,0.9);
-          box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
+          border-color: #00D9FF;
+          box-shadow: 0 0 0 3px rgba(0,217,255,0.15);
         }
         .field-input:-webkit-autofill {
-          -webkit-box-shadow: 0 0 0 1000px #000717 inset;
-          -webkit-text-fill-color: #fff;
+          -webkit-box-shadow: 0 0 0 1000px #0A1224 inset;
+          -webkit-text-fill-color: #ffffff;
         }
         .input-wrapper .field-input { padding-right: 80px; }
         .code-wrapper .field-input { padding-right: 80px; }
@@ -480,21 +527,21 @@ export default function SignUpPage() {
           right: 14px;
           background: none;
           border: none;
-          color: #818894;
+          color: #8FA3BF;
           cursor: pointer;
           display: flex;
           align-items: center;
           padding: 0;
           transition: color 0.2s;
         }
-        .eye-btn:hover { color: #0ea5e9; }
+        .eye-btn:hover { color: #00D9FF; }
 
         .send-code-btn {
           position: absolute;
           right: 8px;
-          background: rgba(14,165,233,0.12);
-          border: 1px solid rgba(14,165,233,0.25);
-          color: #0ea5e9;
+          background: rgba(0,217,255,0.12);
+          border: 1px solid rgba(0,217,255,0.25);
+          color: #00D9FF;
           font-size: 13px;
           font-weight: 700;
           cursor: pointer;
@@ -504,12 +551,12 @@ export default function SignUpPage() {
           transition: all 0.2s;
         }
         .send-code-btn:disabled {
-          color: rgba(14,165,233,0.4);
-          border-color: rgba(14,165,233,0.1);
+          color: rgba(0,217,255,0.4);
+          border-color: rgba(0,217,255,0.1);
           cursor: not-allowed;
         }
         .send-code-btn:not(:disabled):hover {
-          background: rgba(14,165,233,0.2);
+          background: rgba(0,217,255,0.2);
         }
 
         .clear-btn {
@@ -517,9 +564,9 @@ export default function SignUpPage() {
           right: 14px;
           width: 24px; height: 24px;
           border-radius: 8px;
-          background: rgba(129,136,148,0.15);
-          border: 1px solid rgba(129,136,148,0.2);
-          color: #818894;
+          background: rgba(24,50,82,0.5);
+          border: 1px solid #183252;
+          color: #8FA3BF;
           font-size: 11px;
           cursor: pointer;
           display: flex;
@@ -532,19 +579,19 @@ export default function SignUpPage() {
         .register-btn {
           width: 100%;
           padding: 16px;
-          border-radius: 14px;
+          border-radius: 12px;
           border: none;
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-          color: #fff;
+          background: #00D9FF;
+          color: #0D1930;
           font-size: 16px;
-          font-weight: 700;
+          font-weight: 800;
           cursor: pointer;
           letter-spacing: 0.3px;
           transition: all 0.2s;
           margin-top: 4px;
-          box-shadow: 0 8px 25px rgba(14,165,233,0.3);
+          box-shadow: 0 8px 25px rgba(0,217,255,0.25);
         }
-        .register-btn:hover { box-shadow: 0 12px 35px rgba(14,165,233,0.4); transform: translateY(-1px); }
+        .register-btn:hover { box-shadow: 0 12px 35px rgba(0,217,255,0.4); transform: translateY(-1px); }
         .register-btn:active { transform: translateY(0) scale(0.98); }
         .register-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
@@ -556,8 +603,8 @@ export default function SignUpPage() {
         }
         .spinner {
           width: 16px; height: 16px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: #fff;
+          border: 2px solid rgba(13,25,48,0.3);
+          border-top-color: #0D1930;
           border-radius: 50%;
           animation: spin 0.6s linear infinite;
         }
@@ -565,13 +612,13 @@ export default function SignUpPage() {
 
         .terms-text {
           font-size: 12px;
-          color: rgba(129,136,148,0.7);
+          color: #8FA3BF;
           text-align: center;
           margin: 0;
           line-height: 1.6;
         }
         .terms-link {
-          color: #0ea5e9;
+          color: #1677FF;
           text-decoration: none;
           font-weight: 500;
         }
@@ -585,23 +632,23 @@ export default function SignUpPage() {
         .divider-line {
           flex: 1;
           height: 1px;
-          background: rgba(129,136,148,0.15);
+          background: #183252;
         }
         .divider-text {
           font-size: 12px;
-          color: #818894;
+          color: #8FA3BF;
           font-weight: 500;
           text-transform: uppercase;
         }
 
         .login-text {
           font-size: 14px;
-          color: #818894;
+          color: #8FA3BF;
           text-align: center;
           margin: 0;
         }
         .login-link {
-          color: #0ea5e9;
+          color: #00D9FF;
           text-decoration: none;
           font-weight: 700;
         }
