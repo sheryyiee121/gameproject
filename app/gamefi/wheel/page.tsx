@@ -68,7 +68,7 @@ export default function LuckyWheelPage() {
         type: 'withdrawal',
         description: 'Lucky Wheel Play Cost',
         token: 'USDT',
-        timestamp: new Date().getTime(),
+        timestamp: new Date().toISOString(),
         status: 'approved'
       });
     } catch (e) {
@@ -114,7 +114,7 @@ export default function LuckyWheelPage() {
             type: 'deposit',
             description: 'Lucky Wheel Reward',
             token: 'USDT',
-            timestamp: new Date().getTime(),
+            timestamp: new Date().toISOString(),
             status: 'approved'
           });
         } catch (e) {

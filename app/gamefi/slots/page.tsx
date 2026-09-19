@@ -119,7 +119,7 @@ export default function SlotMachinePage() {
                 type: 'withdrawal',
                 description: 'Slot Machine Play',
                 token: 'USDT',
-                timestamp: new Date().getTime(),
+                timestamp: new Date().toISOString(),
                 status: 'approved'
             });
         } catch (err) {
@@ -169,7 +169,7 @@ export default function SlotMachinePage() {
                         type: 'deposit',
                         description: 'Slot Machine Reward',
                         token: 'USDT',
-                        timestamp: new Date().getTime(),
+                        timestamp: new Date().toISOString(),
                         status: 'approved'
                     });
                 } catch (err) {

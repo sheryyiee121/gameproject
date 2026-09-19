@@ -83,7 +83,7 @@ export default function DicePage() {
                     type: 'withdrawal',
                     description: 'Dice Game Play',
                     token: 'USDT',
-                    timestamp: new Date().getTime(),
+                    timestamp: new Date().toISOString(),
                     status: 'approved'
                 });
             }
@@ -144,7 +144,7 @@ export default function DicePage() {
                 type: 'deposit',
                 description: 'Dice Base Reward',
                 token: 'USDT',
-                timestamp: new Date().getTime(),
+                timestamp: new Date().toISOString(),
                 status: 'approved'
             });
             setBalance(newBalance);
