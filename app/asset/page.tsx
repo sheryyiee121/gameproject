@@ -141,12 +141,13 @@ export default function AssetPage() {
 
         {/* Asset List / History */}
         <div className="asset-list-card">
-          <div className="asset-list-header">
-            <h2 className="list-title">Asset History</h2>
+          <div className="asset-list-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px' }}>
+            <h2 className="list-title" style={{ margin: 0 }}>Asset History</h2>
+            <button onClick={() => router.push('/bill')} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>View Full ›</button>
           </div>
 
           <div className="list-content">
-            {history.length > 0 ? history.map((tx, idx) => (
+            {history.length > 0 ? history.slice(0, 5).map((tx, idx) => (
               <div className="asset-row" key={idx}>
                 <div className="asset-left">
                   <div className="coin-icon" style={{ background: tx.type === 'deposit' ? '#10b981' : '#ef4444' }}>
@@ -159,13 +160,13 @@ export default function AssetPage() {
                     </svg>
                   </div>
                   <span className="coin-name">
-                    {tx.type === 'deposit' ? 'Admin Deposit' : 'Withdrawal'} ({tx.token})
+                    {tx.description || (tx.type === 'deposit' ? 'Admin Deposit' : 'Withdrawal')} ({tx.token || tx.asset || 'USDT'})
                     {tx.status && <span style={{ marginLeft: 8, fontSize: '11px', textTransform: 'capitalize', color: tx.status === 'processing' ? '#f59e0b' : tx.status === 'approved' ? '#10b981' : '#ef4444', background: tx.status === 'processing' ? '#fffbeb' : tx.status === 'approved' ? '#ecfdf5' : '#fef2f2', padding: '2px 6px', borderRadius: '4px', border: `1px solid ${tx.status === 'processing' ? '#fcd34d' : tx.status === 'approved' ? '#6ee7b7' : '#fca5a5'}` }}>{tx.status}</span>}
                   </span>
                 </div>
                 <div className="asset-right">
                   <span className="coin-bal" style={{ color: tx.type === 'deposit' ? '#10b981' : '#ef4444' }}>
-                    {tx.type === 'deposit' ? '+' : '-'}${tx.amount.toFixed(2)}
+                    {tx.type === 'deposit' ? '+' : '-'}${Math.abs(Number(tx.amount || 0)).toFixed(2)}
                   </span>
                   <span className="coin-usd">{new Date(tx.timestamp).toLocaleString()}</span>
                 </div>
@@ -180,8 +181,8 @@ export default function AssetPage() {
           {/* USDT */}
           <div className="asset-row">
             <div className="asset-left">
-              <div className="coin-icon" style={{ background: '#10b981' }}>
-                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>₮</span>
+              <div className="coin-icon">
+                <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=040" alt="USDT" className="coin-logo-img" />
               </div>
               <span className="coin-name">USDT</span>
             </div>
@@ -194,8 +195,8 @@ export default function AssetPage() {
           {/* DOGE */}
           <div className="asset-row">
             <div className="asset-left">
-              <div className="coin-icon" style={{ background: '#f59e0b' }}>
-                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>Ð</span>
+              <div className="coin-icon">
+                <img src="https://cryptologos.cc/logos/dogecoin-doge-logo.svg?v=040" alt="DOGE" className="coin-logo-img" />
               </div>
               <span className="coin-name">DOGE</span>
             </div>
@@ -208,8 +209,8 @@ export default function AssetPage() {
           {/* FIL */}
           <div className="asset-row">
             <div className="asset-left">
-              <div className="coin-icon" style={{ background: '#3b82f6' }}>
-                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>⨎</span>
+              <div className="coin-icon">
+                <img src="https://cryptologos.cc/logos/filecoin-fil-logo.svg?v=040" alt="FIL" className="coin-logo-img" />
               </div>
               <span className="coin-name">FIL</span>
             </div>
@@ -222,8 +223,8 @@ export default function AssetPage() {
           {/* ETH */}
           <div className="asset-row" style={{ borderBottom: 'none' }}>
             <div className="asset-left">
-              <div className="coin-icon" style={{ background: '#6366f1' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 12 12 22 22 12 12 2"></polygon></svg>
+              <div className="coin-icon">
+                <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=040" alt="ETH" className="coin-logo-img" />
               </div>
               <span className="coin-name">ETH</span>
             </div>
@@ -469,6 +470,32 @@ export default function AssetPage() {
           align-items: center;
           padding: 16px 20px;
           border-bottom: 1px solid rgba(129,136,148,0.1);
+        }
+        .asset-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .asset-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 2px;
+        }
+        .coin-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .coin-logo-img {
+          width: 36px;
+          height: 36px;
+          object-fit: contain;
         }
         .coin-name {
           font-size: 16px;

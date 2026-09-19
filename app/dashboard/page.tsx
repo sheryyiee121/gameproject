@@ -203,6 +203,22 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Feature Cards Grid (Bonus Center & GameFi) */}
+        <div className="feature-cards-grid">
+          <div className="feature-card">
+            <span className="feature-title">Bonus Center</span>
+            <div className="feature-img-wrapper">
+              <img src="/bonus_center.png" alt="Bonus Center" className="feature-img" />
+            </div>
+          </div>
+          <div className="feature-card" onClick={() => router.push('/gamefi')}>
+            <span className="feature-title">GameFi</span>
+            <div className="feature-img-wrapper" style={{ right: 0, bottom: -5 }}>
+              <img src="/gamefi_safe.png" alt="GameFi" className="feature-img" />
+            </div>
+          </div>
+        </div>
+
         <div className="profit-card">
           <div className="profit-col">
             <span className="profit-title">Today Profit</span>
@@ -226,10 +242,45 @@ export default function DashboardPage() {
         {/* Promo Banner */}
         <div className="promo-banner">
           <div className="banner-content">
-            <h2 className="banner-title">NEXMINE<br /><span style={{ color: '#ff9800' }}>RAKSHA BANDHAN</span></h2>
-            <div className="banner-rewards">
-              <div className="reward-badge">1,000 SSXX</div>
-              <div className="reward-badge">1,500 SSXX</div>
+            <h2 className="banner-title">NEXMINE<br /><span style={{ color: '#ff9800' }}>BIG BONUS COMING SOON</span></h2>
+          </div>
+        </div>
+
+        {/* Partners Slideshow */}
+        <div className="partners-section">
+          <h3 style={{ fontSize: '16px', color: '#fff', fontWeight: 'bold', padding: '0 20px', marginBottom: '15px' }}>Partners</h3>
+          <div className="marquee-container">
+            <div className="marquee-content">
+              {[1, 2].map((set) => (
+                <div key={set} style={{ display: 'flex', gap: '15px', paddingRight: '15px' }}>
+                  <div className="partner-item">
+                    <img src="https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=040" alt="Binance" style={{ width: 22, height: 22, marginRight: 6 }} />
+                    <span style={{ color: '#F0B90B', fontWeight: 800, fontSize: '14px', letterSpacing: '0.5px' }}>BINANCE</span>
+                  </div>
+                  <div className="partner-item">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" style={{ height: 24 }} />
+                  </div>
+                  <div className="partner-item">
+                    <svg width="18" height="18" viewBox="0 0 88 88" style={{ marginRight: 8 }}>
+                      <path fill="#f35325" d="M0 0h41.5v41.5H0z" /><path fill="#81bc06" d="M46.5 0H88v41.5H46.5z" /><path fill="#05a6f0" d="M0 46.5h41.5V88H0z" /><path fill="#ffba08" d="M46.5 46.5H88V88H46.5z" />
+                    </svg>
+                    <span style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>Microsoft</span>
+                  </div>
+                  <div className="partner-item">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Nvidia_logo.svg" alt="Nvidia" style={{ height: 26, filter: 'brightness(0) invert(1)' }} />
+                  </div>
+                  <div className="partner-item">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="OpenAI" style={{ height: 24, filter: 'brightness(0) invert(1)' }} />
+                  </div>
+                  <div className="partner-item">
+                    <span style={{ color: '#d97757', fontWeight: 700, fontSize: '15px', marginRight: '4px', fontFamily: 'serif' }}>Claude</span>
+                    <span style={{ color: '#fff', fontSize: '11px', opacity: 0.8 }}>by Anthropic</span>
+                  </div>
+                  <div className="partner-item">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg" alt="Salesforce" style={{ height: 28, transform: 'scale(1.1)' }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -507,6 +558,59 @@ export default function DashboardPage() {
           font-weight: 600;
         }
 
+        .feature-cards-grid {
+          display: flex;
+          gap: 12px;
+          margin: 5px 0;
+        }
+        .feature-card {
+          flex: 1;
+          background: linear-gradient(145deg, #0f1c32 0%, #061023 100%);
+          border: 1px solid rgba(56,189,248,0.2);
+          border-radius: 16px;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          min-height: 130px;
+          overflow: hidden;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.3), inset 0 0 20px rgba(14,165,233,0.05);
+          cursor: pointer;
+          transition: transform 0.2s;
+        }
+        .feature-card:hover {
+          transform: translateY(-2px);
+          border-color: rgba(56,189,248,0.4);
+        }
+        .feature-title {
+          font-size: 15px;
+          font-weight: 800;
+          color: #ffffff;
+          position: relative;
+          z-index: 2;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+          text-transform: capitalize;
+        }
+        .feature-img-wrapper {
+          position: absolute;
+          bottom: -5px;
+          right: -15px;
+          width: 100px;
+          height: 100px;
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          z-index: 1;
+        }
+        .feature-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          mix-blend-mode: lighten;
+          -webkit-mask-image: linear-gradient(to right, transparent, black 25%);
+          mask-image: linear-gradient(to right, transparent, black 25%);
+        }
+
         .profit-card {
           background: #000717;
           border: 1px solid rgba(129,136,148,0.15);
@@ -710,6 +814,40 @@ export default function DashboardPage() {
           box-shadow: 0 8px 25px rgba(14,165,233,0.4);
           cursor: pointer;
           margin-bottom: 6px;
+        }
+        .partners-section {
+          margin-top: 25px;
+          margin-bottom: 5px;
+        }
+        .marquee-container {
+          width: 100vw;
+          margin-left: -20px;
+          overflow: hidden;
+          background: transparent;
+          padding: 5px 0;
+          position: relative;
+        }
+        .marquee-content {
+          display: flex;
+          align-items: center;
+          animation: scrollMarquee 20s linear infinite;
+          width: max-content;
+          padding-left: 20px;
+        }
+        .partner-item {
+          background: #000717;
+          border: 1px solid rgba(129,136,148,0.25);
+          border-radius: 12px;
+          padding: 0 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 52px;
+          white-space: nowrap;
+        }
+        @keyframes scrollMarquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
       `}</style>
     </div >

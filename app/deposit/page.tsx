@@ -3,6 +3,13 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Official crypto logo URLs from cryptologos.cc CDN
+const COIN_LOGOS: Record<string, string> = {
+    USDT: 'https://cryptologos.cc/logos/tether-usdt-logo.svg?v=040',
+    USDC: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=040',
+    BTC: 'https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=040',
+};
+
 export default function DepositPage() {
     const router = useRouter();
     const [selectedCoin, setSelectedCoin] = useState<'USDT' | 'USDC' | 'BTC'>('USDT');
@@ -50,22 +57,21 @@ export default function DepositPage() {
                 {/* Coin Selection */}
                 <h3 style={{ marginBottom: '10px', fontSize: '14px', color: '#64748b' }}>Select Coin</h3>
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                    {['USDT', 'USDC', 'BTC'].map(coin => (
+                    {(['USDT', 'USDC', 'BTC'] as const).map(coin => (
                         <button
                             key={coin}
                             onClick={() => {
-                                setSelectedCoin(coin as any);
-                                setSelectedNetwork(Object.keys(addresses[coin as string])[0]);
+                                setSelectedCoin(coin);
+                                setSelectedNetwork(Object.keys(addresses[coin])[0]);
                             }}
-                            style={{
-                                flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid',
-                                borderColor: selectedCoin === coin ? '#3b82f6' : '#e2e8f0',
-                                background: selectedCoin === coin ? '#eff6ff' : '#fff',
-                                color: selectedCoin === coin ? '#1d4ed8' : '#334155',
-                                fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s'
-                            }}
+                            className={`coin-select-btn ${selectedCoin === coin ? 'coin-active' : ''}`}
                         >
-                            {coin}
+                            <img
+                                src={COIN_LOGOS[coin]}
+                                alt={`${coin} logo`}
+                                className="coin-logo"
+                            />
+                            <span>{coin}</span>
                         </button>
                     ))}
                 </div>
@@ -92,6 +98,16 @@ export default function DepositPage() {
 
                 {/* Address Card */}
                 <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+
+                    {/* Selected coin logo in the card */}
+                    <div className="address-card-icon">
+                        <img
+                            src={COIN_LOGOS[selectedCoin]}
+                            alt={`${selectedCoin} logo`}
+                            style={{ width: '48px', height: '48px' }}
+                        />
+                        <span style={{ marginTop: '6px', fontWeight: 700, fontSize: '16px', color: '#1e293b' }}>{selectedCoin}</span>
+                    </div>
 
                     {/* QR Code Placeholder (could be a real QR generator later) */}
                     <div style={{ width: '150px', height: '150px', background: '#f1f5f9', margin: '0 auto 20px auto', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -141,7 +157,44 @@ export default function DepositPage() {
           color: #64748b;
           cursor: pointer;
         }
+        .coin-select-btn {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 12px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          background: #fff;
+          color: #334155;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-size: 14px;
+        }
+        .coin-select-btn:hover {
+          border-color: #93c5fd;
+          background: #f8faff;
+        }
+        .coin-select-btn.coin-active {
+          border-color: #3b82f6;
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+        .coin-logo {
+          width: 24px;
+          height: 24px;
+          object-fit: contain;
+        }
+        .address-card-icon {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 16px;
+        }
       `}</style>
         </div>
     );
 }
+
