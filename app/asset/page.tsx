@@ -206,16 +206,16 @@ export default function AssetPage() {
             </div>
           </div>
 
-          {/* FIL */}
+          {/* BTC */}
           <div className="asset-row">
             <div className="asset-left">
               <div className="coin-icon">
-                <img src="https://cryptologos.cc/logos/filecoin-fil-logo.svg?v=040" alt="FIL" className="coin-logo-img" />
+                <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=040" alt="BTC" className="coin-logo-img" />
               </div>
-              <span className="coin-name">FIL</span>
+              <span className="coin-name">BTC</span>
             </div>
             <div className="asset-right">
-              <span className="coin-bal">0</span>
+              <span className="coin-bal">{(user?.balances?.btc || 0).toFixed(6)}</span>
               <span className="coin-usd">≈ 0 USDT</span>
             </div>
           </div>

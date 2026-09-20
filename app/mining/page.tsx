@@ -171,19 +171,6 @@ export default function MiningPage() {
                     </div>
                 </div>
 
-                {/* Referral Tier Info */}
-                <div className="tier-table-card">
-                    <h3 className="tier-table-title">🎁 Referral Bonus Tiers</h3>
-                    <div className="tier-row header-row">
-                        <span>Team Size</span>
-                        <span>Bonus per Deposit</span>
-                    </div>
-                    <div className="tier-row"><span>1 – 3 members</span><span className="bonus-val">$5</span></div>
-                    <div className="tier-row"><span>3 – 5 members</span><span className="bonus-val">$10</span></div>
-                    <div className="tier-row"><span>5 – 10 members</span><span className="bonus-val">$10</span></div>
-                    <div className="tier-row last-row"><span>10 – 50 members</span><span className="bonus-val gold">$20</span></div>
-                </div>
-
                 {/* Details List */}
                 <div className="details-list">
                     <div className="detail-row">

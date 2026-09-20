@@ -248,7 +248,7 @@ export default function DashboardPage() {
             <span className="reward-title">Free Mining Reward</span>
             <span className="reward-val">0.018$</span>
           </div>
-          <button className="claim-btn" onClick={() => alert('⛏️ Mining rewards are credited automatically by admin. Check your balance!')}>Claim</button>
+          <button className="claim-btn" onClick={() => alert('🎉 Congratulations! You received your $0.018 reward!')}>Claim</button>
         </div>
 
         {/* Promo Banner */}
