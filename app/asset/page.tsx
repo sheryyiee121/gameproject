@@ -64,7 +64,7 @@ export default function AssetPage() {
         {/* Tabs */}
         <div className="tabs-container">
           <button className="tab active">Assets</button>
-          <button className="tab">Exchange</button>
+          <button className="tab" onClick={() => alert('🔄 Crypto exchange feature coming soon!')}>Exchange</button>
         </div>
 
         {/* Total Assets Card */}
@@ -150,9 +150,9 @@ export default function AssetPage() {
             {history.length > 0 ? history.slice(0, 5).map((tx, idx) => (
               <div className="asset-row" key={idx}>
                 <div className="asset-left">
-                  <div className="coin-icon" style={{ background: tx.type === 'deposit' ? '#10b981' : '#ef4444' }}>
+                  <div className="coin-icon" style={{ background: tx.type !== 'withdrawal' ? '#10b981' : '#ef4444' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      {tx.type === 'deposit' ? (
+                      {tx.type !== 'withdrawal' ? (
                         <path d="M12 5v14M5 12l7-7 7 7" />
                       ) : (
                         <path d="M12 19V5M5 12l7 7 7-7" />
@@ -160,13 +160,13 @@ export default function AssetPage() {
                     </svg>
                   </div>
                   <span className="coin-name">
-                    {tx.description || (tx.type === 'deposit' ? 'Admin Deposit' : 'Withdrawal')} ({tx.token || tx.asset || 'USDT'})
+                    {tx.description || (tx.type !== 'withdrawal' ? (tx.type === 'deposit_approved' || tx.type === 'deposit' ? 'Deposit' : 'Income') : 'Withdrawal')} ({tx.token || tx.asset || 'USDT'})
                     {tx.status && <span style={{ marginLeft: 8, fontSize: '11px', textTransform: 'capitalize', color: tx.status === 'processing' ? '#f59e0b' : tx.status === 'approved' ? '#10b981' : '#ef4444', background: tx.status === 'processing' ? '#fffbeb' : tx.status === 'approved' ? '#ecfdf5' : '#fef2f2', padding: '2px 6px', borderRadius: '4px', border: `1px solid ${tx.status === 'processing' ? '#fcd34d' : tx.status === 'approved' ? '#6ee7b7' : '#fca5a5'}` }}>{tx.status}</span>}
                   </span>
                 </div>
                 <div className="asset-right">
-                  <span className="coin-bal" style={{ color: tx.type === 'deposit' ? '#10b981' : '#ef4444' }}>
-                    {tx.type === 'deposit' ? '+' : '-'}${Math.abs(Number(tx.amount || 0)).toFixed(2)}
+                  <span className="coin-bal" style={{ color: tx.type !== 'withdrawal' ? '#10b981' : '#ef4444' }}>
+                    {tx.type !== 'withdrawal' ? '+' : '-'}${Math.abs(Number(tx.amount || 0)).toFixed(2)}
                   </span>
                   <span className="coin-usd">{new Date(tx.timestamp).toLocaleString()}</span>
                 </div>

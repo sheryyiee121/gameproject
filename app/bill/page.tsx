@@ -41,11 +41,12 @@ export default function FundFlowPage() {
     // Format transaction type
     const getTxLabel = (tx: any) => {
         if (tx.description) return tx.description;
-        if (tx.type === 'deposit') return 'Admin Deposit';
+        if (tx.type === 'deposit' || tx.type === 'deposit_approved') return 'Deposit';
         if (tx.type === 'withdrawal') return 'Withdrawal';
         if (tx.type === 'mining') return 'Computing Power Income';
         if (tx.type === 'task') return 'Task Income';
         if (tx.type === 'bonus') return 'Basic Income Reward';
+        if (tx.type === 'referral_commission') return 'Referral Commission';
         return 'System Transaction';
     };
 
@@ -78,7 +79,7 @@ export default function FundFlowPage() {
                         <div className="ffi-card" key={tx.id}>
                             <div className="ffi-row">
                                 <span className="ffi-label">{getTxLabel(tx)}</span>
-                                <span className="ffi-amount" style={{ color: tx.type === 'deposit' || tx.type === 'bonus' || tx.type === 'mining' ? '#fff' : '#ef4444' }}>
+                                <span className="ffi-amount" style={{ color: tx.type === 'withdrawal' || tx.type === 'withdrawal_refund' && tx.amount < 0 ? '#ef4444' : '#10b981' }}>
                                     {tx.type === 'withdrawal' ? '-' : '+'}{Number(tx.amount).toFixed(4)} {tx.token || 'USDT'}
                                 </span>
                             </div>

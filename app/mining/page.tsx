@@ -138,25 +138,25 @@ export default function MiningPage() {
 
                 {/* Action Grid */}
                 <div className="action-grid">
-                    <div className="action-item">
+                    <div className="action-item" onClick={() => alert('📈 Stake Record coming soon! Your staking history will appear here.')} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg>
                         </div>
                         <span className="action-label">Stake Record</span>
                     </div>
-                    <div className="action-item">
+                    <div className="action-item" onClick={() => alert('💰 Profit tracking coming soon! Detailed profit analytics will appear here.')} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-teal">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="12" y1="2" x2="12" y2="6"></line></svg>
                         </div>
                         <span className="action-label">Profit</span>
                     </div>
-                    <div className="action-item">
+                    <div className="action-item" onClick={() => alert('⚙️ Equipment upgrades coming soon! Boost your mining rate with premium equipment.')} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                         </div>
                         <span className="action-label">Equipment</span>
                     </div>
-                    <div className="action-item">
+                    <div className="action-item" onClick={() => router.push('/tutorial')} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><circle cx="12" cy="17" r="0.5"></circle></svg>
                         </div>

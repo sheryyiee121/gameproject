@@ -30,7 +30,7 @@ export default function TaskPage() {
       <div className="top-container">
         <div className="tabs-container">
           <button className="tab active">Bonus Center</button>
-          <button className="tab">Leaderboard</button>
+          <button className="tab" onClick={() => alert('🏆 Leaderboard coming soon! Keep earning to climb the ranks.')}>Leaderboard</button>
         </div>
       </div>
 
@@ -66,16 +66,16 @@ export default function TaskPage() {
             </div>
           </div>
           <div className="reward-actions">
-            <button className="btn-outline">Collect</button>
-            <button className="btn-solid">Reward Details</button>
+            <button className="btn-outline" onClick={() => alert('💰 Rewards are credited automatically when eligible. Contact support if you have issues.')}>Collect</button>
+            <button className="btn-solid" onClick={() => alert('📊 Reward details: Complete deposits to unlock tier bonuses. Each tier can be claimed once.')}>Reward Details</button>
           </div>
         </div>
 
         {/* Sub Navigation */}
         <div className="sub-nav">
           <button className="sub-nav-item active">Upgrade Bonus</button>
-          <button className="sub-nav-item">Daily Bonus 🔥</button>
-          <button className="sub-nav-item">Activity Bonus</button>
+          <button className="sub-nav-item" onClick={() => alert('🔥 Daily Bonus coming soon! Check back every day for new rewards.')}>Daily Bonus 🔥</button>
+          <button className="sub-nav-item" onClick={() => alert('🎉 Activity Bonus coming soon! Complete special tasks to earn extra USDT.')}>Activity Bonus</button>
         </div>
 
         {/* Upgrade Items */}
@@ -114,7 +114,7 @@ export default function TaskPage() {
               </div>
               <div className="card-bottom">
                 <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled">CLAIM BONUS</button>
+                <button className="btn-claim disabled" onClick={() => alert('🥈 Deposit at least 100 USDT to unlock Silver level bonus.')}>CLAIM BONUS</button>
               </div>
             </div>
           </div>
@@ -133,7 +133,7 @@ export default function TaskPage() {
               </div>
               <div className="card-bottom">
                 <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled">CLAIM BONUS</button>
+                <button className="btn-claim disabled" onClick={() => alert('🥇 Deposit at least 300 USDT to unlock Gold level bonus.')}>CLAIM BONUS</button>
               </div>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function TaskPage() {
               </div>
               <div className="card-bottom">
                 <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled">CLAIM BONUS</button>
+                <button className="btn-claim disabled" onClick={() => alert('💫 Deposit at least 600 USDT to unlock Platinum level bonus.')}>CLAIM BONUS</button>
               </div>
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function TaskPage() {
               </div>
               <div className="card-bottom">
                 <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled">CLAIM BONUS</button>
+                <button className="btn-claim disabled" onClick={() => alert('💠 Deposit at least 1,500 USDT to unlock Diamond level bonus.')}>CLAIM BONUS</button>
               </div>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function TaskPage() {
               </div>
               <div className="card-bottom">
                 <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled">CLAIM BONUS</button>
+                <button className="btn-claim disabled" onClick={() => alert('👑 Deposit at least 5,000 USDT to unlock VIP level bonus.')}>CLAIM BONUS</button>
               </div>
             </div>
           </div>

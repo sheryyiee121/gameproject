@@ -9,9 +9,10 @@ export default function AdminDashboard() {
     const [adminPass, setAdminPass] = useState("");
     const [users, setUsers] = useState<any[]>([]);
     const [withdrawals, setWithdrawals] = useState<any[]>([]);
+    const [deposits, setDeposits] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'users' | 'withdrawals'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'withdrawals' | 'deposits'>('users');
 
     const handleAdminLogin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -20,6 +21,7 @@ export default function AdminDashboard() {
             setIsAdminLoggedIn(true);
             fetchUsers();
             fetchWithdrawals();
+            fetchDeposits();
         } else {
             alert("Invalid Admin Password");
         }
@@ -66,6 +68,52 @@ export default function AdminDashboard() {
                 : `❌ Withdrawal rejected. $${withdrawal.amount} refunded to ${withdrawal.username}'s balance.`
             );
             fetchWithdrawals();
+        } catch (err: any) {
+            alert("Action failed: " + err.message);
+        }
+    };
+
+    const fetchDeposits = async () => {
+        try {
+            const q = query(collection(db, "depositRequests"), orderBy("createdAt", "desc"));
+            const snap = await getDocs(q);
+            const list: any[] = [];
+            snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+            setDeposits(list);
+        } catch (err: any) {
+            console.error("Failed to fetch deposits:", err.message);
+        }
+    };
+
+    const handleDepositAction = async (deposit: any, action: 'approved' | 'rejected') => {
+        const confirmMsg = action === 'approved'
+            ? `Approve deposit of ${deposit.amount} ${deposit.coin} for ${deposit.username}? This will add ${deposit.amount} to their balance.`
+            : `Reject deposit of ${deposit.amount} ${deposit.coin} for ${deposit.username}?`;
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            await updateDoc(doc(db, "depositRequests", deposit.id), { status: action });
+
+            if (action === 'approved') {
+                const tokenKey = deposit.coin.toLowerCase();
+                await updateDoc(doc(db, "users", deposit.uid), {
+                    [`balances.${tokenKey}`]: increment(deposit.amount)
+                });
+                await addDoc(collection(db, "users", deposit.uid, "transactions"), {
+                    type: 'deposit_approved',
+                    amount: deposit.amount,
+                    token: deposit.coin,
+                    note: 'Deposit request approved by Admin',
+                    timestamp: new Date().toISOString()
+                });
+            }
+
+            alert(action === 'approved'
+                ? `✅ Deposit approved! ${deposit.amount} ${deposit.coin} added to ${deposit.username}'s balance.`
+                : `❌ Deposit rejected.`
+            );
+            fetchDeposits();
+            fetchUsers();
         } catch (err: any) {
             alert("Action failed: " + err.message);
         }
@@ -223,7 +271,7 @@ export default function AdminDashboard() {
                     <button onClick={createMockUser} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
                         + Create Fake User
                     </button>
-                    <button onClick={() => { fetchUsers(); fetchWithdrawals(); }} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #ddd', borderRadius: '5px', cursor: 'pointer' }}>
+                    <button onClick={() => { fetchUsers(); fetchWithdrawals(); fetchDeposits(); }} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #ddd', borderRadius: '5px', cursor: 'pointer' }}>
                         Refresh All
                     </button>
                 </div>
@@ -242,6 +290,12 @@ export default function AdminDashboard() {
                     style={{ padding: '10px 24px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', background: activeTab === 'withdrawals' ? '#f59e0b' : 'transparent', color: activeTab === 'withdrawals' ? '#fff' : '#64748b', position: 'relative' }}
                 >
                     💸 Withdrawals ({withdrawals.filter(w => w.status === 'processing').length} pending)
+                </button>
+                <button
+                    onClick={() => setActiveTab('deposits')}
+                    style={{ padding: '10px 24px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', background: activeTab === 'deposits' ? '#10b981' : 'transparent', color: activeTab === 'deposits' ? '#fff' : '#64748b', position: 'relative' }}
+                >
+                    💳 Deposits ({deposits.filter(d => d.status === 'processing').length} pending)
                 </button>
             </div>
 
@@ -435,6 +489,82 @@ export default function AdminDashboard() {
                                                         </button>
                                                         <button
                                                             onClick={() => handleWithdrawalAction(w, 'rejected')}
+                                                            style={{ padding: '7px 14px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                                                        >
+                                                            ❌ Reject
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span style={{ color: '#94a3b8', fontSize: '13px' }}>No action needed</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
+            {/* ===== END WITHDRAWALS TAB ===== */}
+
+            {/* ===== DEPOSITS TAB ===== */}
+            {activeTab === 'deposits' && (
+                <div style={{ background: '#fff', borderRadius: '10px', padding: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                    <h3 style={{ marginTop: 0, marginBottom: '16px' }}>💳 Deposit Requests ({deposits.length} total)</h3>
+                    {deposits.length === 0 ? (
+                        <p style={{ color: '#888', textAlign: 'center', padding: '30px' }}>No deposit requests yet.</p>
+                    ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '2px solid #eee', background: '#f8fafc' }}>
+                                        <th style={{ padding: '12px 10px' }}>Date</th>
+                                        <th style={{ padding: '12px 10px' }}>User</th>
+                                        <th style={{ padding: '12px 10px' }}>User ID</th>
+                                        <th style={{ padding: '12px 10px' }}>Amount</th>
+                                        <th style={{ padding: '12px 10px' }}>Network</th>
+                                        <th style={{ padding: '12px 10px' }}>Status</th>
+                                        <th style={{ padding: '12px 10px' }}>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {deposits.map((d) => (
+                                        <tr key={d.id} style={{ borderBottom: '1px solid #eee', background: d.status === 'processing' ? '#fffbeb' : 'transparent' }}>
+                                            <td style={{ padding: '12px 10px', fontSize: '12px', color: '#64748b' }}>
+                                                {d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}
+                                            </td>
+                                            <td style={{ padding: '12px 10px' }}>
+                                                <strong style={{ color: '#0ea5e9', fontSize: '14px' }}>{d.username}</strong><br />
+                                                <span style={{ fontSize: '11px', color: '#94a3b8' }}>{d.email}</span>
+                                            </td>
+                                            <td style={{ padding: '12px 10px', fontFamily: 'monospace', fontSize: '12px', color: '#7c3aed', fontWeight: 'bold' }}>
+                                                {d.uid}
+                                            </td>
+                                            <td style={{ padding: '12px 10px', fontWeight: 'bold', fontSize: '16px', color: '#10b981' }}>
+                                                +{d.amount} {d.coin}
+                                            </td>
+                                            <td style={{ padding: '12px 10px' }}>
+                                                <span style={{ background: '#f0f9ff', color: '#0284c7', padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
+                                                    {d.network}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '12px 10px' }}>
+                                                {d.status === 'processing' && <span style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fcd34d', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>⏳ Processing</span>}
+                                                {d.status === 'approved' && <span style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #6ee7b7', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>✅ Approved</span>}
+                                                {d.status === 'rejected' && <span style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fca5a5', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>❌ Rejected</span>}
+                                            </td>
+                                            <td style={{ padding: '12px 10px' }}>
+                                                {d.status === 'processing' ? (
+                                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                                        <button
+                                                            onClick={() => handleDepositAction(d, 'approved')}
+                                                            style={{ padding: '7px 14px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                                                        >
+                                                            ✅ Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDepositAction(d, 'rejected')}
                                                             style={{ padding: '7px 14px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
                                                         >
                                                             ❌ Reject

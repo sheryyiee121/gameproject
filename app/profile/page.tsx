@@ -88,14 +88,14 @@ export default function ProfilePage() {
                     <img src="/nexmine-ai-logo.png" alt="Nexmine" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
                 </div>
                 <div className="nav-icons">
-                    <button className="icon-btn" aria-label="Language">
+                    <button className="icon-btn" aria-label="Language" onClick={() => alert('🌐 Multi-language support coming soon!')}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="2" y1="12" x2="22" y2="12"></line>
                             <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"></path>
                         </svg>
                     </button>
-                    <button className="icon-btn" aria-label="Notifications">
+                    <button className="icon-btn" aria-label="Notifications" onClick={() => alert('🔔 Notifications coming soon!')}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                             <path d="M13.73 21a2 2 0 01-3.46 0"></path>
@@ -135,7 +135,7 @@ export default function ProfilePage() {
 
                 {/* Level Banners */}
                 <div className="banners-grid">
-                    <div className="banner-card">
+                    <div className="banner-card" onClick={() => router.push('/membership')} style={{ cursor: 'pointer' }}>
                         <div className="banner-content">
                             <span className="banner-title">Level</span>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="chevron-sm"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -144,7 +144,7 @@ export default function ProfilePage() {
                             <span className="emoji-graphic">💻</span>
                         </div>
                     </div>
-                    <div className="banner-card">
+                    <div className="banner-card" onClick={() => router.push('/team')} style={{ cursor: 'pointer' }}>
                         <div className="banner-content">
                             <span className="banner-title">Invite<br />Friends</span>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="chevron-sm"><polyline points="9 18 15 12 9 6"></polyline></svg>

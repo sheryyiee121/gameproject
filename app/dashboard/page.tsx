@@ -71,14 +71,14 @@ export default function DashboardPage() {
               <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"></path>
             </svg>
           </a>
-          <button className="icon-btn" aria-label="Language">
+          <button className="icon-btn" aria-label="Language" onClick={() => alert('🌐 Multi-language support coming soon!')}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"></path>
             </svg>
           </button>
-          <button className="icon-btn" aria-label="Notifications">
+          <button className="icon-btn" aria-label="Notifications" onClick={() => alert('🔔 Notifications coming soon!')}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 01-3.46 0"></path>
@@ -160,23 +160,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="action-grid">
-          <div className="action-item">
+          <div className="action-item" onClick={() => router.push('/task')}>
             <div className="action-icon-wrapper gift-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 12 20 22 4 22 4 12"></polyline>
-                <rect x="2" y="7" width="20" height="5"></rect>
-                <line x1="12" y1="22" x2="12" y2="7"></line>
-                <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"></path>
-                <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"></path>
-              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" /></svg>
             </div>
             <span className="action-label">Task Center</span>
           </div>
-          <div className="action-item">
+          <div className="action-item" onClick={() => router.push('/membership')}>
             <div className="action-icon-wrapper diamond-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 3h12l4 6-10 13L2 9z"></path>
-              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12l4 6-10 13L2 9z" /></svg>
             </div>
             <span className="action-label">Membership Levels</span>
           </div>
@@ -191,13 +183,9 @@ export default function DashboardPage() {
             </div>
             <span className="action-label">My Team</span>
           </div>
-          <div className="action-item">
+          <div className="action-item" onClick={() => router.push('/tutorial')}>
             <div className="action-icon-wrapper help-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"></path>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
             </div>
             <span className="action-label">Operation Tutorial</span>
           </div>
@@ -205,7 +193,7 @@ export default function DashboardPage() {
 
         {/* Feature Cards Grid (Bonus Center & GameFi) */}
         <div className="feature-cards-grid">
-          <div className="feature-card">
+          <div className="feature-card" onClick={() => router.push('/task')} style={{ cursor: 'pointer' }}>
             <span className="feature-title">Bonus Center</span>
             <div className="feature-img-wrapper">
               <img src="/bonus_center.png" alt="Bonus Center" className="feature-img" />
@@ -236,7 +224,7 @@ export default function DashboardPage() {
             <span className="reward-title">Free Mining Reward</span>
             <span className="reward-val">0.018$</span>
           </div>
-          <button className="claim-btn">Claim</button>
+          <button className="claim-btn" onClick={() => alert('⛏️ Mining rewards are credited automatically by admin. Check your balance!')}>Claim</button>
         </div>
 
         {/* Promo Banner */}
