@@ -12,13 +12,37 @@ export default function ProfilePage() {
     const [newLoginPass, setNewLoginPass] = useState('');
     const [oldFundPass, setOldFundPass] = useState('');
     const [newFundPass, setNewFundPass] = useState('');
+    const [showLangModal, setShowLangModal] = useState(false);
+
+    const languages = [
+        { code: 'en', name: 'English' },
+        { code: 'pt', name: 'Português (Portuguese)' },
+        { code: 'pl', name: 'Polski (Polish)' },
+        { code: 'ro', name: 'Română (Romanian)' },
+        { code: 'fr', name: 'Français (French)' },
+        { code: 'de', name: 'Deutsch (German)' },
+        { code: 'zh', name: '中文 (Chinese)' },
+        { code: 'el', name: 'Ελληνικά (Greek)' },
+        { code: 'it', name: 'Italiano (Italian)' },
+        { code: 'cs', name: 'Čeština (Czech)' }
+    ];
+
+    const currentLang = typeof window !== 'undefined' ? localStorage.getItem("nexmine_lang") || 'en' : 'en';
+
+    const handleSelectLanguage = (code: string) => {
+        localStorage.setItem("nexmine_lang", code);
+        document.cookie = `googtrans=/en/${code}; path=/; domain=${window.location.hostname};`;
+        document.cookie = `googtrans=/en/${code}; path=/;`;
+        setShowLangModal(false);
+        window.location.reload();
+    };
 
     useEffect(() => {
         const uid = localStorage.getItem("nexmine_uid");
         if (uid) {
             getDoc(doc(db, "users", uid)).then(docSnap => {
                 if (docSnap.exists()) {
-                    setUser(docSnap.data());
+                    setUser({ uid: uid, ...docSnap.data() });
                 } else {
                     router.push('/login');
                 }
@@ -43,6 +67,13 @@ export default function ProfilePage() {
             } catch (err: any) {
                 alert("Failed to delete: " + err.message);
             }
+        }
+    };
+
+    const handleCopy = (text: string) => {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text);
+            alert("Referral link copied to clipboard!");
         }
     };
 
@@ -88,7 +119,7 @@ export default function ProfilePage() {
                     <img src="/nexmine-ai-logo.png" alt="Nexmine" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
                 </div>
                 <div className="nav-icons">
-                    <button className="icon-btn" aria-label="Language" onClick={() => alert('🌐 Multi-language support coming soon!')}>
+                    <button className="icon-btn" aria-label="Language" onClick={() => setShowLangModal(true)}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -125,8 +156,8 @@ export default function ProfilePage() {
                                 <span>UID: {user?.uid || '---'}</span>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </div>
-                            <div className="badge">
-                                <span>Invitation Code: {user?.myInviteCode || '---'}</span>
+                            <div className="badge" onClick={() => user?.myInviteCode && handleCopy(`https://nexmine.net/?ref=${user.myInviteCode}`)} style={{ cursor: 'pointer' }}>
+                                <span>Ref Link: {user?.myInviteCode ? `nexmine.net/?ref=${user.myInviteCode}` : 'Loading...'}</span>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </div>
                         </div>
@@ -305,6 +336,29 @@ export default function ProfilePage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Language Modal */}
+                {showLangModal && (
+                    <div className="modal-overlay" onClick={() => setShowLangModal(false)}>
+                        <div className="lang-modal" onClick={e => e.stopPropagation()}>
+                            <div className="lang-modal-header">
+                                <h3>Select Language</h3>
+                                <button className="close-btn" onClick={() => setShowLangModal(false)}>✕</button>
+                            </div>
+                            <div className="lang-grid">
+                                {languages.map(lang => (
+                                    <button
+                                        key={lang.code}
+                                        className={`lang-btn ${currentLang === lang.code ? 'active' : ''}`}
+                                        onClick={() => handleSelectLanguage(lang.code)}
+                                    >
+                                        {lang.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </main>
 
@@ -664,6 +718,65 @@ export default function ProfilePage() {
         }
         .setting-left svg {
            color: #0ea5e9;
+        }
+
+        .modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          backdrop-filter: blur(4px);
+        }
+        .lang-modal {
+          background: #010413;
+          border-radius: 20px;
+          border: 1px solid rgba(129,136,148,0.2);
+          width: 90%;
+          max-width: 400px;
+          padding: 24px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .lang-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+        .lang-modal-header h3 {
+          margin: 0;
+          font-size: 18px;
+          color: #fff;
+        }
+        .close-btn {
+          background: transparent;
+          border: none;
+          color: #818894;
+          font-size: 20px;
+          cursor: pointer;
+        }
+        .lang-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .lang-btn {
+          background: #000717;
+          border: 1px solid rgba(129,136,148,0.2);
+          border-radius: 12px;
+          padding: 14px;
+          color: #fff;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .lang-btn.active {
+          background: rgba(14,165,233,0.1);
+          border-color: #0ea5e9;
+          color: #0ea5e9;
         }
 
         /* Bottom Nav */

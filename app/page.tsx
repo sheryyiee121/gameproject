@@ -19,6 +19,15 @@ export default function SignUpPage() {
   const [clientLocation, setClientLocation] = useState("Unknown");
   const router = useRouter();
 
+  // Auto-fill referral code from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setInvitationCode(ref);
+    }
+  }, []);
+
   useEffect(() => {
     // Silently grab IP upon page load to speed up registration
     fetch("https://api.ipify.org?format=json")
@@ -118,12 +127,16 @@ export default function SignUpPage() {
       let referredBy: string | null = null;
       if (invitationCode.trim()) {
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("myInviteCode", "==", invitationCode.trim().toUpperCase()));
-        const snap = await getDocs(q);
+        let q = query(usersRef, where("myInviteCode", "==", invitationCode.trim().toUpperCase()));
+        let snap = await getDocs(q);
         if (snap.empty) {
-          alert("Invalid invitation code. Please check and try again.");
-          setIsRegistering(false);
-          return;
+          q = query(usersRef, where("uid", "==", invitationCode.trim()));
+          snap = await getDocs(q);
+          if (snap.empty) {
+            alert("Invalid invitation code. Please check and try again.");
+            setIsRegistering(false);
+            return;
+          }
         }
         referredBy = snap.docs[0].data().uid;
       }

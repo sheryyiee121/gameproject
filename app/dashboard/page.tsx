@@ -9,6 +9,30 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [showBonus, setShowBonus] = useState(false);
+  const [showLangModal, setShowLangModal] = useState(false);
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'pt', name: 'Português (Portuguese)' },
+    { code: 'pl', name: 'Polski (Polish)' },
+    { code: 'ro', name: 'Română (Romanian)' },
+    { code: 'fr', name: 'Français (French)' },
+    { code: 'de', name: 'Deutsch (German)' },
+    { code: 'zh', name: '中文 (Chinese)' },
+    { code: 'el', name: 'Ελληνικά (Greek)' },
+    { code: 'it', name: 'Italiano (Italian)' },
+    { code: 'cs', name: 'Čeština (Czech)' }
+  ];
+
+  const currentLang = typeof window !== 'undefined' ? localStorage.getItem("nexmine_lang") || 'en' : 'en';
+
+  const handleSelectLanguage = (code: string) => {
+    localStorage.setItem("nexmine_lang", code);
+    document.cookie = `googtrans=/en/${code}; path=/; domain=${window.location.hostname};`;
+    document.cookie = `googtrans=/en/${code}; path=/;`;
+    setShowLangModal(false);
+    window.location.reload();
+  };
 
   useEffect(() => {
     const uid = localStorage.getItem("nexmine_uid");
@@ -71,7 +95,7 @@ export default function DashboardPage() {
               <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"></path>
             </svg>
           </a>
-          <button className="icon-btn" aria-label="Language" onClick={() => alert('🌐 Multi-language support coming soon!')}>
+          <button className="icon-btn" aria-label="Language" onClick={() => setShowLangModal(true)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -273,6 +297,29 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Language Modal */}
+      {showLangModal && (
+        <div className="modal-overlay" onClick={() => setShowLangModal(false)}>
+          <div className="lang-modal" onClick={e => e.stopPropagation()}>
+            <div className="lang-modal-header">
+              <h3>Select Language</h3>
+              <button className="close-btn" onClick={() => setShowLangModal(false)}>✕</button>
+            </div>
+            <div className="lang-grid">
+              {languages.map(lang => (
+                <button
+                  key={lang.code}
+                  className={`lang-btn ${currentLang === lang.code ? 'active' : ''}`}
+                  onClick={() => handleSelectLanguage(lang.code)}
+                >
+                  {lang.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <nav className="bottom-nav">
@@ -756,6 +803,65 @@ export default function DashboardPage() {
         @keyframes popIn {
             0% { transform: scale(0.8); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          backdrop-filter: blur(4px);
+        }
+        .lang-modal {
+          background: #010413;
+          border-radius: 20px;
+          border: 1px solid rgba(129,136,148,0.2);
+          width: 90%;
+          max-width: 400px;
+          padding: 24px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .lang-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+        .lang-modal-header h3 {
+          margin: 0;
+          font-size: 18px;
+          color: #fff;
+        }
+        .close-btn {
+          background: transparent;
+          border: none;
+          color: #818894;
+          font-size: 20px;
+          cursor: pointer;
+        }
+        .lang-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .lang-btn {
+          background: #000717;
+          border: 1px solid rgba(129,136,148,0.2);
+          border-radius: 12px;
+          padding: 14px;
+          color: #fff;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .lang-btn.active {
+          background: rgba(14,165,233,0.1);
+          border-color: #0ea5e9;
+          color: #0ea5e9;
         }
 
         .bottom-nav {

@@ -87,3 +87,22 @@ body {
   background: var(--accent-glow);
   color: #fff;
 }
+
+/* ============================================================
+   GOOGLE TRANSLATE OVERRIDES
+   ============================================================ */
+body {
+  top: 0 !important;
+}
+
+.skiptranslate {
+  display: none !important;
+}
+
+#google_translate_element {
+  display: none !important;
+}
+
+iframe.skiptranslate {
+  display: none !important;
+}
