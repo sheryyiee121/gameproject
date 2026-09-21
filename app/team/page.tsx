@@ -144,7 +144,7 @@ export default function TeamPage() {
                         </div>
                         <div className="stat-card">
                             <span className="sc-title">My Tier</span>
-                            <span className="sc-val">{user?.tier || 'Bronze'}</span>
+                            <span className="sc-val">{user?.tier || 'Basic'}</span>
                             <div className="sc-trend">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 21 12 3 19 10 12 3 5 10 12 3"></polygon></svg>
                                 <span>Current</span>

@@ -81,6 +81,25 @@ export default function TaskPage() {
         {/* Upgrade Items */}
         <div className="upgrade-list">
 
+          {/* Basic */}
+          <div className="upgrade-card">
+            <div className="ticket">
+              <span className="t-amt">0</span>
+              <span className="t-lbl">USDT<br />Bonus</span>
+            </div>
+            <div className="card-info">
+              <h3 className="card-title">Basic Level</h3>
+              <p className="card-desc">Default level for all new users</p>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: '100%' }}></div>
+              </div>
+              <div className="card-bottom">
+                <span className="amount-text">0 USDT</span>
+                <button className="btn-claim received">Received</button>
+              </div>
+            </div>
+          </div>
+
           {/* Bronze */}
           <div className="upgrade-card">
             <div className="ticket">
@@ -89,13 +108,13 @@ export default function TaskPage() {
             </div>
             <div className="card-info">
               <h3 className="card-title">Upgrade To Bronze</h3>
-              <p className="card-desc">Upgrade To Bronze And Get +5 USDT</p>
+              <p className="card-desc">Deposit 50 USDT And Get +5 USDT</p>
               <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '100%' }}></div>
+                <div className="progress-fill" style={{ width: '0%' }}></div>
               </div>
               <div className="card-bottom">
                 <span className="amount-text">0 USDT</span>
-                <button className="btn-claim received">Received</button>
+                <button className="btn-claim disabled" onClick={() => alert('🥉 Deposit at least 50 USDT to unlock Bronze level bonus.')}>CLAIM BONUS</button>
               </div>
             </div>
           </div>

@@ -6,7 +6,8 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 const LEVELS = [
-    { name: 'Bronze', minDeposit: 0, bonus: 5, color: '#cd7f32', emoji: '🥉' },
+    { name: 'Basic', minDeposit: 0, bonus: 0, color: '#64748b', emoji: '⭐' },
+    { name: 'Bronze', minDeposit: 50, bonus: 5, color: '#cd7f32', emoji: '🥉' },
     { name: 'Silver', minDeposit: 100, bonus: 10, color: '#94a3b8', emoji: '🥈' },
     { name: 'Gold', minDeposit: 300, bonus: 25, color: '#ffd700', emoji: '🥇' },
     { name: 'Platinum', minDeposit: 600, bonus: 50, color: '#e2e8f0', emoji: '💎' },

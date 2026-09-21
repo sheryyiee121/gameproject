@@ -77,7 +77,7 @@ export default function MiningPage() {
                     <div className="tier-icon">
                         <span className="emoji-badge">🥉</span>
                     </div>
-                    <h2 className="tier-name">{user?.tier || 'Bronze'}</h2>
+                    <h2 className="tier-name">{user?.tier || 'Basic'}</h2>
                 </div>
 
                 {/* ——— LIVE MINING TRACKER ——— */}

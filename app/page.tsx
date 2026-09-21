@@ -183,7 +183,7 @@ export default function SignUpPage() {
         miningRate: parseFloat((Math.random() * (1 - 0.05) + 0.05).toFixed(4)),
         miningStartedAt: serverTimestamp(),
         hasClaimedBonus: false,
-        tier: "Bronze",
+        tier: "Basic",
         createdAt: serverTimestamp()
       });
 

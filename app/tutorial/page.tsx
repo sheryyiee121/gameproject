@@ -44,7 +44,7 @@ const SECTIONS = [
             'Send your crypto from your personal wallet or exchange to this address.',
             'After the blockchain confirms the transaction, inform admin via support chat.',
             'Admin will credit the funds to your Nexmine balance.',
-            'Depositing more USDT unlocks higher membership tiers (Bronze → VIP) and larger mining rewards.',
+            'Depositing more USDT unlocks higher membership tiers (Basic → Bronze → VIP) and larger mining rewards.',
             '⚠️ Always double-check the network matches your sending wallet to avoid losing funds.',
         ],
     },
@@ -105,7 +105,8 @@ const SECTIONS = [
         color: '#ffd700',
         bullets: [
             'Your membership level is determined by your total USDT deposited to the platform.',
-            '🥉 Bronze – 0+ USDT deposited → +$5 USDT bonus',
+            '⭐ Basic – 0+ USDT deposited → Default starting level (no bonus)',
+            '🥉 Bronze – 50+ USDT deposited → +$5 USDT bonus',
             '🥈 Silver – 100+ USDT deposited → +$10 USDT bonus',
             '🥇 Gold – 300+ USDT deposited → +$25 USDT bonus',
             '💎 Platinum – 600+ USDT deposited → +$50 USDT bonus',
@@ -122,7 +123,7 @@ const SECTIONS = [
         bullets: [
             'Go to the Task tab in the bottom navigation.',
             'The Upgrade Bonus section shows all membership tier upgrade rewards.',
-            'When you deposit enough to reach a new tier, you can CLAIM the corresponding bonus (e.g., +$5 for Bronze).',
+            'When you deposit enough to reach a new tier, you can CLAIM the corresponding bonus (e.g., +$5 for Bronze at 50 USDT).',
             'Tasks already completed show a "Received" badge — each bonus can only be claimed once.',
             'The Daily Bonus tab (🔥) and Activity Bonus tab offer additional time-limited rewards.',
             'Check the Task Center regularly — new bonus events may be added by admin.',

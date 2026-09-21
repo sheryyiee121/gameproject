@@ -158,7 +158,7 @@ export default function AdminDashboard() {
                 password: "fakepassword",
                 isBlocked: false,
                 balances: { usdt: 100, usdc: 0 },
-                tier: "Bronze",
+                tier: "Basic",
                 createdAt: new Date()
             });
             alert("Inserted Fake User with $100 USDT!");
