@@ -192,6 +192,20 @@ export default function AssetPage() {
             </div>
           </div>
 
+          {/* USDC */}
+          <div className="asset-row">
+            <div className="asset-left">
+              <div className="coin-icon">
+                <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=040" alt="USDC" className="coin-logo-img" />
+              </div>
+              <span className="coin-name">USDC</span>
+            </div>
+            <div className="asset-right">
+              <span className="coin-bal">{(user?.balances?.usdc || 0).toFixed(3)}</span>
+              <span className="coin-usd">≈ {(user?.balances?.usdc || 0).toFixed(3)} USDT</span>
+            </div>
+          </div>
+
           {/* DOGE */}
           <div className="asset-row">
             <div className="asset-left">
