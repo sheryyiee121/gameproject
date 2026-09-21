@@ -1,9 +1,23 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function WelcomePage() {
     const router = useRouter();
+
+    useEffect(() => {
+        // Reset language to English on entry
+        if (typeof window !== "undefined") {
+            const currentCookie = document.cookie.match(/(?:^|;) ?googtrans=([^;]*)(?:;|$)/);
+            if (currentCookie && currentCookie[1] !== '/en/en') {
+                document.cookie = `googtrans=/en/en; path=/; domain=${window.location.hostname};`;
+                document.cookie = `googtrans=/en/en; path=/;`;
+                localStorage.setItem("nexmine_lang", "en");
+                window.location.reload();
+            }
+        }
+    }, []);
 
     return (
         <div className="welcome-root">

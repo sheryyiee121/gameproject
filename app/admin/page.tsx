@@ -14,6 +14,19 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'users' | 'withdrawals' | 'deposits'>('users');
 
+    useEffect(() => {
+        // Force English language on Admin Panel
+        if (typeof window !== "undefined") {
+            const currentCookie = document.cookie.match(/(?:^|;) ?googtrans=([^;]*)(?:;|$)/);
+            if (currentCookie && currentCookie[1] !== '/en/en') {
+                document.cookie = `googtrans=/en/en; path=/; domain=${window.location.hostname};`;
+                document.cookie = `googtrans=/en/en; path=/;`;
+                localStorage.setItem("nexmine_lang", "en");
+                window.location.reload();
+            }
+        }
+    }, []);
+
     const handleAdminLogin = (e: React.FormEvent) => {
         e.preventDefault();
         const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";

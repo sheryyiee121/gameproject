@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -12,6 +12,19 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    // Reset language to English on entry
+    if (typeof window !== "undefined") {
+      const currentCookie = document.cookie.match(/(?:^|;) ?googtrans=([^;]*)(?:;|$)/);
+      if (currentCookie && currentCookie[1] !== '/en/en') {
+        document.cookie = `googtrans=/en/en; path=/; domain=${window.location.hostname};`;
+        document.cookie = `googtrans=/en/en; path=/;`;
+        localStorage.setItem("nexmine_lang", "en");
+        window.location.reload();
+      }
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -21,6 +21,17 @@ export default function SignUpPage() {
 
   // Auto-fill referral code from URL on mount
   useEffect(() => {
+    // Reset language to English on entry
+    if (typeof window !== "undefined") {
+      const currentCookie = document.cookie.match(/(?:^|;) ?googtrans=([^;]*)(?:;|$)/);
+      if (currentCookie && currentCookie[1] !== '/en/en') {
+        document.cookie = `googtrans=/en/en; path=/; domain=${window.location.hostname};`;
+        document.cookie = `googtrans=/en/en; path=/;`;
+        localStorage.setItem("nexmine_lang", "en");
+        window.location.reload();
+      }
+    }
+
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
     if (ref) {
