@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 
 const LEVELS = [
     { name: 'Basic', minDeposit: 0, bonus: 0, color: '#64748b', emoji: '⭐' },
@@ -27,6 +27,7 @@ function getUserLevel(totalDeposited: number) {
 export default function MembershipPage() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
+    const [totalDeposited, setTotalDeposited] = useState(0);
 
     useEffect(() => {
         const uid = localStorage.getItem('nexmine_uid');
@@ -35,12 +36,30 @@ export default function MembershipPage() {
                 if (snap.exists()) setUser(snap.data());
                 else router.push('/login');
             });
+
+            // dynamically calculate total deposited
+            const fetchDeposits = async () => {
+                try {
+                    let total = 0;
+                    const txSnap = await getDocs(collection(db, 'users', uid, 'transactions'));
+                    txSnap.forEach(d => {
+                        const data = d.data();
+                        if (data.type === 'deposit_approved' || data.type === 'deposit') {
+                            total += (data.amount || 0);
+                        }
+                    });
+                    setTotalDeposited(total);
+                } catch (e) {
+                    console.error("Failed to load deposits", e);
+                }
+            };
+            fetchDeposits();
+
         } else {
             router.push('/login');
         }
     }, [router]);
 
-    const totalDeposited = user?.totalDeposited ?? 0;
     const currentLevel = getUserLevel(totalDeposited);
 
     return (

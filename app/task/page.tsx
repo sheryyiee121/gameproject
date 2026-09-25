@@ -3,11 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, updateDoc, increment, addDoc } from 'firebase/firestore';
 
 export default function TaskPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [totalDeposit, setTotalDeposit] = useState(0);
 
   useEffect(() => {
     const uid = localStorage.getItem("nexmine_uid");
@@ -19,10 +20,93 @@ export default function TaskPage() {
           router.push('/login');
         }
       });
+      // Fetch total deposits
+      const fetchDeposits = async () => {
+        try {
+          let total = 0;
+          const txSnap = await getDocs(collection(db, "users", uid, "transactions"));
+          txSnap.forEach(d => {
+            const data = d.data();
+            if (data.type === 'deposit_approved' || data.type === 'deposit') {
+              total += (data.amount || 0);
+            }
+          });
+          setTotalDeposit(total);
+        } catch (e) {
+          console.error("Failed to fetch deposits", e);
+        }
+      };
+      fetchDeposits();
     } else {
       router.push('/login');
     }
   }, [router]);
+
+  const TIERS = ["Basic", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "VIP"];
+
+  const handleClaim = async (tierName: string, reqDeposit: number, bonus: number, icon: string) => {
+    if (totalDeposit < reqDeposit) {
+      alert(`${icon} Deposit at least ${reqDeposit} USDT to unlock ${tierName} level bonus.`);
+      return;
+    }
+    const tierKey = tierName.toLowerCase();
+    if (user?.claimedBonuses?.[tierKey]) {
+      return;
+    }
+
+    try {
+      const uid = localStorage.getItem("nexmine_uid");
+      if (!uid) return;
+
+      const currentTierIndex = TIERS.indexOf(user?.tier || 'Basic');
+      const newTierIndex = TIERS.indexOf(tierName);
+
+      const updates: any = {
+        [`claimedBonuses.${tierKey}`]: true,
+        'balances.usdt': increment(bonus),
+        totalProfit: increment(bonus)
+      };
+      if (newTierIndex > currentTierIndex) {
+        updates.tier = tierName;
+      }
+
+      const userRef = doc(db, "users", uid);
+      await updateDoc(userRef, updates);
+
+      await addDoc(collection(userRef, "transactions"), {
+        type: 'tier_bonus',
+        amount: bonus,
+        token: 'USDT',
+        note: `Claimed ${tierName} tier bonus`,
+        timestamp: new Date().toISOString()
+      });
+
+      setUser((prev: any) => ({
+        ...prev,
+        claimedBonuses: { ...(prev.claimedBonuses || {}), [tierKey]: true },
+        tier: newTierIndex > currentTierIndex ? tierName : (prev.tier || 'Basic'),
+        totalProfit: (prev.totalProfit || 0) + bonus,
+        todayProfit: (prev.todayProfit || 0) + bonus,
+        balances: {
+          ...prev.balances,
+          usdt: (prev.balances?.usdt || 0) + bonus
+        }
+      }));
+
+      alert(`🎉 Successfully claimed ${bonus} USDT for reaching ${tierName} tier!`);
+    } catch (err: any) {
+      alert("Failed to claim bonus: " + err.message);
+    }
+  };
+
+  const upgrades = [
+    { title: 'Bronze', req: 50, bonus: 5, icon: '🥉' },
+    { title: 'Silver', req: 100, bonus: 10, icon: '🥈' },
+    { title: 'Gold', req: 300, bonus: 25, icon: '🥇' },
+    { title: 'Platinum', req: 600, bonus: 50, icon: '💫' },
+    { title: 'Diamond', req: 1500, bonus: 250, icon: '💠' },
+    { title: 'VIP', req: 5000, bonus: 500, icon: '👑' },
+  ];
 
   return (
     <div className="task-root">
@@ -58,11 +142,11 @@ export default function TaskPage() {
           <div className="reward-stats">
             <div className="stat-box">
               <span className="stat-lbl">Today Reward</span>
-              <span className="stat-val">0 USDT</span>
+              <span className="stat-val">{(user?.todayProfit || 0).toFixed(4)} USDT</span>
             </div>
             <div className="stat-box">
               <span className="stat-lbl">Total Reward</span>
-              <span className="stat-val">6 USDT</span>
+              <span className="stat-val">{(user?.totalProfit || 0).toFixed(4)} USDT</span>
             </div>
           </div>
           <div className="reward-actions">
@@ -94,125 +178,44 @@ export default function TaskPage() {
                 <div className="progress-fill" style={{ width: '100%' }}></div>
               </div>
               <div className="card-bottom">
-                <span className="amount-text">0 USDT</span>
+                <span className="amount-text">{totalDeposit.toFixed(2)} USDT</span>
                 <button className="btn-claim received">Received</button>
               </div>
             </div>
           </div>
 
-          {/* Bronze */}
-          <div className="upgrade-card">
-            <div className="ticket">
-              <span className="t-amt">5</span>
-              <span className="t-lbl">USDT<br />Bonus</span>
-            </div>
-            <div className="card-info">
-              <h3 className="card-title">Upgrade To Bronze</h3>
-              <p className="card-desc">Deposit 50 USDT And Get +5 USDT</p>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '0%' }}></div>
-              </div>
-              <div className="card-bottom">
-                <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled" onClick={() => alert('🥉 Deposit at least 50 USDT to unlock Bronze level bonus.')}>CLAIM BONUS</button>
-              </div>
-            </div>
-          </div>
+          {upgrades.map(u => {
+            const tierKey = u.title.toLowerCase();
+            const isClaimed = !!user?.claimedBonuses?.[tierKey];
+            const canClaim = totalDeposit >= u.req;
+            const progress = Math.min(100, (totalDeposit / u.req) * 100);
 
-          {/* Silver */}
-          <div className="upgrade-card">
-            <div className="ticket">
-              <span className="t-amt">10</span>
-              <span className="t-lbl">USDT<br />Bonus</span>
-            </div>
-            <div className="card-info">
-              <h3 className="card-title">Upgrade To Silver</h3>
-              <p className="card-desc">Upgrade To Silver And Get +10 USDT</p>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '0%' }}></div>
+            return (
+              <div className="upgrade-card" key={u.title}>
+                <div className="ticket">
+                  <span className="t-amt" style={{ fontSize: u.bonus >= 500 ? '14px' : '20px' }}>{u.bonus}</span>
+                  <span className="t-lbl">USDT<br />Bonus</span>
+                </div>
+                <div className="card-info">
+                  <h3 className="card-title">Upgrade To {u.title}</h3>
+                  <p className="card-desc">Deposit {u.req} USDT And Get +{u.bonus} USDT</p>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+                  </div>
+                  <div className="card-bottom">
+                    <span className="amount-text">{totalDeposit.toFixed(2)} / {u.req} USDT</span>
+                    {isClaimed ? (
+                      <button className="btn-claim received">Received</button>
+                    ) : (canClaim ? (
+                      <button className="btn-claim" onClick={() => handleClaim(u.title, u.req, u.bonus, u.icon)} style={{ background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#fff', boxShadow: '0 2px 10px rgba(14,165,233,0.3)', cursor: 'pointer' }}>CLAIM BONUS</button>
+                    ) : (
+                      <button className="btn-claim disabled" onClick={() => handleClaim(u.title, u.req, u.bonus, u.icon)}>CLAIM BONUS</button>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="card-bottom">
-                <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled" onClick={() => alert('🥈 Deposit at least 100 USDT to unlock Silver level bonus.')}>CLAIM BONUS</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Gold */}
-          <div className="upgrade-card">
-            <div className="ticket">
-              <span className="t-amt">25</span>
-              <span className="t-lbl">USDT<br />Bonus</span>
-            </div>
-            <div className="card-info">
-              <h3 className="card-title">Upgrade To Gold</h3>
-              <p className="card-desc">Upgrade To Gold And Get +25 USDT</p>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '0%' }}></div>
-              </div>
-              <div className="card-bottom">
-                <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled" onClick={() => alert('🥇 Deposit at least 300 USDT to unlock Gold level bonus.')}>CLAIM BONUS</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Platinium */}
-          <div className="upgrade-card">
-            <div className="ticket">
-              <span className="t-amt">50</span>
-              <span className="t-lbl">USDT<br />Bonus</span>
-            </div>
-            <div className="card-info">
-              <h3 className="card-title">Upgrading To Platinium</h3>
-              <p className="card-desc">Upgrade To Platinium And Get +50 USDT</p>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '0%' }}></div>
-              </div>
-              <div className="card-bottom">
-                <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled" onClick={() => alert('💫 Deposit at least 600 USDT to unlock Platinum level bonus.')}>CLAIM BONUS</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Diamond */}
-          <div className="upgrade-card">
-            <div className="ticket">
-              <span className="t-amt">250</span>
-              <span className="t-lbl">USDT<br />Bonus</span>
-            </div>
-            <div className="card-info">
-              <h3 className="card-title">Upgrade To Diamond</h3>
-              <p className="card-desc">Upgrade To Diamond And Get +250 USDT</p>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '0%' }}></div>
-              </div>
-              <div className="card-bottom">
-                <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled" onClick={() => alert('💠 Deposit at least 1,500 USDT to unlock Diamond level bonus.')}>CLAIM BONUS</button>
-              </div>
-            </div>
-          </div>
-
-          {/* VIP */}
-          <div className="upgrade-card">
-            <div className="ticket">
-              <span className="t-amt" style={{ fontSize: '14px' }}>500</span>
-              <span className="t-lbl">USDT<br />Bonus</span>
-            </div>
-            <div className="card-info">
-              <h3 className="card-title">Upgrade To VIP</h3>
-              <p className="card-desc">Upgrade To VIP And Get +500 USDT</p>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '0%' }}></div>
-              </div>
-              <div className="card-bottom">
-                <span className="amount-text">0 USDT</span>
-                <button className="btn-claim disabled" onClick={() => alert('👑 Deposit at least 5,000 USDT to unlock VIP level bonus.')}>CLAIM BONUS</button>
-              </div>
-            </div>
-          </div>
+            );
+          })}
 
         </div>
       </main>

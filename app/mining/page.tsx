@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, serverTimestamp, collection, getDocs, query, orderBy, addDoc } from 'firebase/firestore';
 
 // Helper: get the tier bonus amount based on referrer's team size
 export function getReferralBonus(teamSize: number): number {
@@ -20,6 +20,15 @@ export default function MiningPage() {
     const [liveEarned, setLiveEarned] = useState(0);      // live accumulating since miningStartedAt
     const [ratePerSec, setRatePerSec] = useState(0);
     const intervalRef = useRef<any>(null);
+
+    const [showStakeModal, setShowStakeModal] = useState(false);
+    const [stakeInput, setStakeInput] = useState('');
+    const [isStaking, setIsStaking] = useState(false);
+
+    const [showStakeRecordModal, setShowStakeRecordModal] = useState(false);
+    const [showProfitModal, setShowProfitModal] = useState(false);
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [isLoadingTx, setIsLoadingTx] = useState(false);
 
     useEffect(() => {
         const uid = localStorage.getItem("nexmine_uid");
@@ -60,6 +69,101 @@ export default function MiningPage() {
 
     const dailyRate = user?.miningRate ?? 0.15;
     const hourlyRate = dailyRate / 24;
+
+    const fetchTransactions = async () => {
+        const uid = localStorage.getItem("nexmine_uid");
+        if (!uid) return;
+        setIsLoadingTx(true);
+        try {
+            const q = query(collection(db, "users", uid, "transactions"), orderBy("timestamp", "desc"));
+            const snap = await getDocs(q);
+            const list: any[] = [];
+            snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+            setTransactions(list);
+        } catch (e) {
+            console.error(e);
+        }
+        setIsLoadingTx(false);
+    };
+
+    const openStakeRecord = async () => {
+        setShowStakeRecordModal(true);
+        await fetchTransactions();
+    };
+
+    const openProfit = async () => {
+        setShowProfitModal(true);
+        await fetchTransactions();
+    };
+
+    const handleStake = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const amt = parseFloat(stakeInput);
+        if (isNaN(amt) || amt < 1) {
+            alert("Please enter a valid stake amount (min $1).");
+            return;
+        }
+        const balance = user?.balances?.usdt || 0;
+        if (amt > balance) {
+            alert(`Insufficient balance. Available: $${balance.toFixed(4)}`);
+            return;
+        }
+
+        setIsStaking(true);
+        try {
+            const uid = localStorage.getItem("nexmine_uid");
+            if (!uid) return;
+            const docRef = doc(db, "users", uid);
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists()) return;
+
+            const data = docSnap.data();
+            let startMs = Date.now();
+            if (data.miningStartedAt?.toDate) {
+                startMs = data.miningStartedAt.toDate().getTime();
+            }
+            const elapsedSec = Math.min((Date.now() - startMs) / 1000, 86400);
+            const perSec = (data.miningRate ?? 0) / 86400;
+            const actualEarned = perSec * elapsedSec;
+
+            const currentStaked = data.stakedAmount ?? 0;
+            const newStaked = currentStaked + amt;
+            const newMiningRate = newStaked * 0.012; // 1.2% daily rate
+
+            await updateDoc(docRef, {
+                'balances.usdt': increment(actualEarned - amt),
+                stakedAmount: newStaked,
+                miningRate: newMiningRate,
+                miningStartedAt: serverTimestamp(),
+                totalProfit: increment(actualEarned)
+            });
+
+            await addDoc(collection(docRef, "transactions"), {
+                type: 'stake',
+                amount: amt,
+                token: 'USDT',
+                timestamp: new Date().toISOString()
+            });
+
+            if (actualEarned > 0) {
+                await addDoc(collection(docRef, "transactions"), {
+                    type: 'mining_profit',
+                    amount: actualEarned,
+                    token: 'USDT',
+                    timestamp: new Date().toISOString()
+                });
+            }
+
+            alert(`✅ Successfully staked $${amt}!`);
+            setShowStakeModal(false);
+            setStakeInput('');
+            window.location.reload();
+        } catch (err: any) {
+            alert("Failed to stake: " + err.message);
+        } finally {
+            setIsStaking(false);
+        }
+    };
 
     return (
         <div className="mining-root">
@@ -138,13 +242,19 @@ export default function MiningPage() {
 
                 {/* Action Grid */}
                 <div className="action-grid">
-                    <div className="action-item" onClick={() => alert('📈 Stake Record coming soon! Your staking history will appear here.')} style={{ cursor: 'pointer' }}>
+                    <div className="action-item" onClick={() => setShowStakeModal(true)} style={{ cursor: 'pointer' }}>
+                        <div className="action-icon stripe-blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                        <span className="action-label">Add Stake</span>
+                    </div>
+                    <div className="action-item" onClick={openStakeRecord} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg>
                         </div>
                         <span className="action-label">Stake Record</span>
                     </div>
-                    <div className="action-item" onClick={() => alert('💰 Profit tracking coming soon! Detailed profit analytics will appear here.')} style={{ cursor: 'pointer' }}>
+                    <div className="action-item" onClick={openProfit} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-teal">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="12" y1="2" x2="12" y2="6"></line></svg>
                         </div>
@@ -176,6 +286,10 @@ export default function MiningPage() {
                     <div className="detail-row">
                         <span className="d-label">Mining Rate Range</span>
                         <span className="d-val">$0.05 – $1.00 / day</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="d-label">Total Staked</span>
+                        <span className="d-val">${(user?.stakedAmount || 0).toFixed(2)} USDT</span>
                     </div>
                     <div className="detail-row">
                         <span className="d-label">Your Daily Rate</span>
@@ -218,6 +332,96 @@ export default function MiningPage() {
                     <span>Profile</span>
                 </button>
             </nav>
+
+            {/* Stake Modal */}
+            {showStakeModal && (
+                <div className="modal-overlay" onClick={() => setShowStakeModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h2>Add Stake</h2>
+                        <p>Stake USDT to start mining. Daily profit: 1.2%</p>
+                        <form onSubmit={handleStake}>
+                            <input
+                                type="number"
+                                placeholder="Amount in USDT"
+                                value={stakeInput}
+                                onChange={e => setStakeInput(e.target.value)}
+                                min="1" step="0.5"
+                                required
+                            />
+                            <div className="modal-actions">
+                                <button type="button" onClick={() => setShowStakeModal(false)} className="cancel-btn">Cancel</button>
+                                <button type="submit" disabled={isStaking} className="stake-submit-btn">
+                                    {isStaking ? 'Staking...' : 'Stake'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Stake Record Modal */}
+            {showStakeRecordModal && (
+                <div className="modal-overlay" onClick={() => setShowStakeRecordModal(false)}>
+                    <div className="modal-content large" onClick={e => e.stopPropagation()}>
+                        <h2>Stake Record</h2>
+                        <div className="tx-list">
+                            {isLoadingTx ? (
+                                <p className="empty-state">Loading records...</p>
+                            ) : transactions.filter(t => t.type === 'stake').length === 0 ? (
+                                <p className="empty-state">No staking records found.</p>
+                            ) : (
+                                transactions.filter(t => t.type === 'stake').map(t => (
+                                    <div className="tx-item" key={t.id}>
+                                        <div className="tx-left">
+                                            <span className="tx-type">Stake Added</span>
+                                            <span className="tx-date">{new Date(t.timestamp).toLocaleString()}</span>
+                                        </div>
+                                        <div className="tx-right negative">
+                                            -{Number(t.amount || 0).toFixed(2)} USDT
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <div className="modal-actions" style={{ marginTop: '16px' }}>
+                            <button type="button" onClick={() => setShowStakeRecordModal(false)} className="cancel-btn" style={{ width: '100%' }}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Profit Modal */}
+            {showProfitModal && (
+                <div className="modal-overlay" onClick={() => setShowProfitModal(false)}>
+                    <div className="modal-content large" onClick={e => e.stopPropagation()}>
+                        <h2>Profit History</h2>
+                        <div className="tx-list">
+                            {isLoadingTx ? (
+                                <p className="empty-state">Loading records...</p>
+                            ) : transactions.filter(t => ['tier_bonus', 'referral_commission', 'mining_profit'].includes(t.type)).length === 0 ? (
+                                <p className="empty-state">No profit records found.</p>
+                            ) : (
+                                transactions.filter(t => ['tier_bonus', 'referral_commission', 'mining_profit'].includes(t.type)).map(t => (
+                                    <div className="tx-item" key={t.id}>
+                                        <div className="tx-left">
+                                            <span className="tx-type">
+                                                {t.type === 'tier_bonus' ? 'Tier Bonus' : t.type === 'referral_commission' ? 'Referral Commission' : 'Mining Profit'}
+                                            </span>
+                                            <span className="tx-date">{new Date(t.timestamp).toLocaleString()}</span>
+                                        </div>
+                                        <div className="tx-right positive">
+                                            +{Number(t.amount || 0).toFixed(4)} USDT
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <div className="modal-actions" style={{ marginTop: '16px' }}>
+                            <button type="button" onClick={() => setShowProfitModal(false)} className="cancel-btn" style={{ width: '100%' }}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style jsx>{`
                 .mining-root {
@@ -325,6 +529,28 @@ export default function MiningPage() {
                 .center-mining-wrapper { position: relative; top: -24px; }
                 .mining-btn { width: 64px; height: 64px; border-radius: 50%; background: #000717; border: 6px solid #00030D; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; margin-bottom: 6px; }
                 .mining-btn.active { background: linear-gradient(135deg,#0ea5e9,#0284c7); box-shadow: 0 8px 25px rgba(14,165,233,0.4); }
+                
+                /* Modal */
+                .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
+                .modal-content { background: #010413; border: 1px solid rgba(129,136,148,0.2); border-radius: 20px; padding: 24px; width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+                .modal-content h2 { margin: 0 0 10px; font-size: 20px; font-weight: 800; color: #fff; }
+                .modal-content p { font-size: 14px; color: #818894; margin: 0 0 20px; }
+                .modal-content input { width: 100%; background: #000717; border: 1px solid rgba(129,136,148,0.3); padding: 14px; border-radius: 12px; color: #fff; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; outline: none; }
+                .modal-content input:focus { border-color: #0ea5e9; }
+                .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+                .cancel-btn { background: #1e293b; color: #fff; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+                .stake-submit-btn { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(14,165,233,0.3); }
+                .stake-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+                
+                .tx-list { max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; padding-right: 5px; }
+                .tx-item { background: #000717; border: 1px solid rgba(129,136,148,0.15); padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+                .tx-left { display: flex; flex-direction: column; gap: 4px; }
+                .tx-type { font-size: 14px; font-weight: 700; color: #fff; }
+                .tx-date { font-size: 11px; color: #818894; }
+                .tx-right { font-size: 16px; font-weight: 800; }
+                .tx-right.positive { color: #10b981; }
+                .tx-right.negative { color: #ef4444; }
+                .empty-state { text-align: center; color: #818894; font-size: 14px; padding: 20px 0; }
             `}</style>
         </div>
     );
