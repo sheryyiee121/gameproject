@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const SYMBOLS = ['🍒', '⭐', '💎', '🔔', '7️⃣'];
@@ -26,6 +26,10 @@ export default function SlotMachinePage() {
 
     const [showWinModal, setShowWinModal] = useState(false);
     const [winData, setWinData] = useState({ amount: 0, multi: 0 });
+
+    const [showRecords, setShowRecords] = useState(false);
+    const [records, setRecords] = useState<any[]>([]);
+    const [loadingRecords, setLoadingRecords] = useState(false);
 
     useEffect(() => {
         const uid = localStorage.getItem("nexmine_uid");
@@ -188,6 +192,23 @@ export default function SlotMachinePage() {
         }, 2500);
     };
 
+    const openRecords = async () => {
+        setShowRecords(true);
+        setLoadingRecords(true);
+        try {
+            const uid = localStorage.getItem("nexmine_uid");
+            if (uid) {
+                const q = query(collection(db, 'users', uid, 'transactions'), orderBy('timestamp', 'desc'));
+                const snap = await getDocs(q);
+                const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter((d: any) => d.description?.includes('Slot Machine'));
+                setRecords(list);
+            }
+        } catch (e) {
+            console.error("Failed to load records", e);
+        }
+        setLoadingRecords(false);
+    };
+
     return (
         <div className="slot-page">
             <header className="header">
@@ -196,8 +217,8 @@ export default function SlotMachinePage() {
                 </button>
                 <div className="header-title">Slot Machine</div>
                 <div className="header-right-icons">
-                    <button className="icon-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg></button>
-                    <button className="icon-btn" style={{ marginLeft: 12 }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" /></svg></button>
+                    <button className="icon-btn" onClick={openRecords}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg></button>
+                    <button className="icon-btn" style={{ marginLeft: 12 }} onClick={() => alert('Prizes feature coming soon!')}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" /></svg></button>
                 </div>
             </header>
 
@@ -310,6 +331,34 @@ export default function SlotMachinePage() {
                                 }}>{c}</span>
                             ))}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {showRecords && (
+                <div className="modal-overlay" onClick={() => setShowRecords(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3 style={{ marginTop: 0, marginBottom: 15, color: '#fff' }}>Game Records</h3>
+                        <div className="tx-list">
+                            {loadingRecords ? (
+                                <p style={{ color: '#94a3b8', textAlign: 'center' }}>Loading...</p>
+                            ) : records.length === 0 ? (
+                                <p style={{ color: '#94a3b8', textAlign: 'center' }}>No records found.</p>
+                            ) : (
+                                records.map(r => (
+                                    <div key={r.id} className="tx-item">
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: 14 }}>{r.description}</div>
+                                            <div style={{ fontSize: 11, color: '#64748b' }}>{new Date(r.timestamp).toLocaleString()}</div>
+                                        </div>
+                                        <div style={{ fontWeight: 800, color: r.type === 'deposit' ? '#10b981' : '#ef4444' }}>
+                                            {r.type === 'deposit' ? '+' : '-'}{Number(r.amount).toFixed(2)}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <button className="close-win-btn" style={{ width: '100%', padding: '14px', borderRadius: '12px' }} onClick={() => setShowRecords(false)}>Close</button>
                     </div>
                 </div>
             )}
@@ -577,6 +626,9 @@ export default function SlotMachinePage() {
                     0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
                     100% { transform: translateY(400px) rotate(360deg); opacity: 0; }
                 }
+
+                .tx-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 100%; text-align: left; }
+                .tx-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
             `}</style>
         </div>
     );

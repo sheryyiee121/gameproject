@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function DicePage() {
@@ -18,6 +18,10 @@ export default function DicePage() {
     const [rolling, setRolling] = useState(false);
     const [diceResult, setDiceResult] = useState<number | null>(null);
     const [lastRollWasRigged, setLastRollWasRigged] = useState(false);
+
+    const [showRecords, setShowRecords] = useState(false);
+    const [records, setRecords] = useState<any[]>([]);
+    const [loadingRecords, setLoadingRecords] = useState(false);
 
     useEffect(() => {
         const uid = localStorage.getItem("nexmine_uid");
@@ -162,6 +166,23 @@ export default function DicePage() {
         }
     };
 
+    const openRecords = async () => {
+        setShowRecords(true);
+        setLoadingRecords(true);
+        try {
+            const uid = localStorage.getItem("nexmine_uid");
+            if (uid) {
+                const q = query(collection(db, 'users', uid, 'transactions'), orderBy('timestamp', 'desc'));
+                const snap = await getDocs(q);
+                const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter((d: any) => d.description?.includes('Dice Game') || d.description?.includes('Dice Base'));
+                setRecords(list);
+            }
+        } catch (e) {
+            console.error("Failed to load records", e);
+        }
+        setLoadingRecords(false);
+    };
+
     return (
         <div className="dice-page">
             <header className="header">
@@ -171,7 +192,7 @@ export default function DicePage() {
                     </svg>
                 </button>
                 <h1 className="header-title">Dice</h1>
-                <div className="history-btn">
+                <div className="history-btn" onClick={openRecords}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                         <line x1="16" y1="2" x2="16" y2="6" />
@@ -286,6 +307,34 @@ export default function DicePage() {
                     </p>
                 </div>
             </main>
+
+            {showRecords && (
+                <div className="modal-overlay" onClick={() => setShowRecords(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3 style={{ marginTop: 0, marginBottom: 15, color: '#fff' }}>Game Records</h3>
+                        <div className="tx-list">
+                            {loadingRecords ? (
+                                <p style={{ color: '#94a3b8', textAlign: 'center' }}>Loading...</p>
+                            ) : records.length === 0 ? (
+                                <p style={{ color: '#94a3b8', textAlign: 'center' }}>No records found.</p>
+                            ) : (
+                                records.map(r => (
+                                    <div key={r.id} className="tx-item">
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: 14 }}>{r.description}</div>
+                                            <div style={{ fontSize: 11, color: '#64748b' }}>{new Date(r.timestamp).toLocaleString()}</div>
+                                        </div>
+                                        <div style={{ fontWeight: 800, color: r.type === 'deposit' ? '#10b981' : '#ef4444' }}>
+                                            {r.type === 'deposit' ? '+' : '-'}{Number(r.amount).toFixed(2)}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <button className="close-win-btn" style={{ width: '100%', padding: '14px', borderRadius: '12px' }} onClick={() => setShowRecords(false)}>Close</button>
+                    </div>
+                </div>
+            )}
 
             <style jsx>{`
                 .dice-page {
@@ -500,6 +549,12 @@ export default function DicePage() {
                     line-height: 1.5;
                     margin: 0;
                 }
+
+                .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
+                .modal-content { background: #0f172a; border-radius: 20px; padding: 24px; width: 90%; max-width: 400px; border: 1px solid rgba(129,136,148,0.2); }
+                .tx-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 100%; text-align: left; }
+                .tx-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
+                .close-win-btn { background: #334155; border: none; color: #fff; font-weight: bold; cursor: pointer; }
             `}</style>
         </div>
     );

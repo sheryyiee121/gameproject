@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const PRIZES = [
@@ -23,6 +23,9 @@ export default function LuckyWheelPage() {
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinCost, setSpinCost] = useState(1);
+  const [showRecords, setShowRecords] = useState(false);
+  const [records, setRecords] = useState<any[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState(false);
 
   useEffect(() => {
     const uid = localStorage.getItem("nexmine_uid");
@@ -126,6 +129,23 @@ export default function LuckyWheelPage() {
     }, 4000);
   };
 
+  const openRecords = async () => {
+    setShowRecords(true);
+    setLoadingRecords(true);
+    try {
+      const uid = localStorage.getItem("nexmine_uid");
+      if (uid) {
+        const q = query(collection(db, 'users', uid, 'transactions'), orderBy('timestamp', 'desc'));
+        const snap = await getDocs(q);
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter((d: any) => d.description?.includes('Lucky Wheel'));
+        setRecords(list);
+      }
+    } catch (e) {
+      console.error("Failed to load records", e);
+    }
+    setLoadingRecords(false);
+  };
+
   return (
     <div className="wheel-page">
       <header className="top-nav">
@@ -138,7 +158,10 @@ export default function LuckyWheelPage() {
 
       <div className="feature-menu">
         {['Rules', 'Records', 'Prizes', 'Times X2'].map((item, i) => (
-          <div className="menu-item" key={i}>
+          <div className="menu-item" key={i} onClick={() => {
+            if (i === 1) openRecords();
+            else alert(item + ' feature coming soon!');
+          }}>
             <div className="menu-icon">
               {i === 0 && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>}
               {i === 1 && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>}
@@ -235,6 +258,34 @@ export default function LuckyWheelPage() {
         <button className="action-btn special-btn">Special Reward Tasks</button>
         <button className="action-btn rules-btn">Wheel Rules</button>
       </div>
+
+      {showRecords && (
+        <div className="modal-overlay" onClick={() => setShowRecords(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0, marginBottom: 15, color: '#fff' }}>Game Records</h3>
+            <div className="tx-list">
+              {loadingRecords ? (
+                <p style={{ color: '#94a3b8', textAlign: 'center' }}>Loading...</p>
+              ) : records.length === 0 ? (
+                <p style={{ color: '#94a3b8', textAlign: 'center' }}>No records found.</p>
+              ) : (
+                records.map(r => (
+                  <div key={r.id} className="tx-item">
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{r.description}</div>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>{new Date(r.timestamp).toLocaleString()}</div>
+                    </div>
+                    <div style={{ fontWeight: 800, color: r.type === 'deposit' ? '#10b981' : '#ef4444' }}>
+                      {r.type === 'deposit' ? '+' : '-'}{Number(r.amount).toFixed(2)}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <button className="close-btn" onClick={() => setShowRecords(false)}>Close</button>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .wheel-page {
@@ -425,6 +476,12 @@ export default function LuckyWheelPage() {
           color: #94a3b8;
           border: 1px solid rgba(148,163,184,0.3);
         }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
+        .modal-content { background: #0f172a; border-radius: 20px; padding: 24px; width: 90%; max-width: 400px; border: 1px solid rgba(129,136,148,0.2); }
+        .tx-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .tx-item { background: #1e293b; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .close-btn { width: 100%; padding: 14px; background: #334155; border: none; border-radius: 12px; color: #fff; font-weight: bold; cursor: pointer; }
       `}</style>
     </div>
   );
