@@ -100,7 +100,7 @@ export default function MiningPage() {
         e.preventDefault();
         const amt = parseFloat(stakeInput);
         if (isNaN(amt) || amt < 1) {
-            alert("Please enter a valid stake amount (min $1).");
+            alert("Please enter a valid earn amount (min $1).");
             return;
         }
         const balance = user?.balances?.usdt || 0;
@@ -154,12 +154,12 @@ export default function MiningPage() {
                 });
             }
 
-            alert(`✅ Successfully staked $${amt}!`);
+            alert(`✅ Successfully added $${amt} to Earn!`);
             setShowStakeModal(false);
             setStakeInput('');
             window.location.reload();
         } catch (err: any) {
-            alert("Failed to stake: " + err.message);
+            alert("Failed to earn: " + err.message);
         } finally {
             setIsStaking(false);
         }
@@ -246,13 +246,13 @@ export default function MiningPage() {
                         <div className="action-icon stripe-blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                         </div>
-                        <span className="action-label">Add Stake</span>
+                        <span className="action-label">Add Earn</span>
                     </div>
                     <div className="action-item" onClick={openStakeRecord} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg>
                         </div>
-                        <span className="action-label">Stake Record</span>
+                        <span className="action-label">Earn Record</span>
                     </div>
                     <div className="action-item" onClick={openProfit} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-teal">
@@ -288,7 +288,7 @@ export default function MiningPage() {
                         <span className="d-val">$0.05 – $1.00 / day</span>
                     </div>
                     <div className="detail-row">
-                        <span className="d-label">Total Staked</span>
+                        <span className="d-label">Total Earned</span>
                         <span className="d-val">${(user?.stakedAmount || 0).toFixed(2)} USDT</span>
                     </div>
                     <div className="detail-row">
@@ -333,12 +333,12 @@ export default function MiningPage() {
                 </button>
             </nav>
 
-            {/* Stake Modal */}
+            {/* Earn Modal */}
             {showStakeModal && (
                 <div className="modal-overlay" onClick={() => setShowStakeModal(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h2>Add Stake</h2>
-                        <p>Stake USDT to start mining. Daily profit: 1.2%</p>
+                        <h2>Add Earn</h2>
+                        <p>Invest USDT to start mining. Daily profit: 1.2%</p>
                         <form onSubmit={handleStake}>
                             <input
                                 type="number"
@@ -351,7 +351,7 @@ export default function MiningPage() {
                             <div className="modal-actions">
                                 <button type="button" onClick={() => setShowStakeModal(false)} className="cancel-btn">Cancel</button>
                                 <button type="submit" disabled={isStaking} className="stake-submit-btn">
-                                    {isStaking ? 'Staking...' : 'Stake'}
+                                    {isStaking ? 'Processing...' : 'Earn'}
                                 </button>
                             </div>
                         </form>
@@ -359,21 +359,21 @@ export default function MiningPage() {
                 </div>
             )}
 
-            {/* Stake Record Modal */}
+            {/* Earn Record Modal */}
             {showStakeRecordModal && (
                 <div className="modal-overlay" onClick={() => setShowStakeRecordModal(false)}>
                     <div className="modal-content large" onClick={e => e.stopPropagation()}>
-                        <h2>Stake Record</h2>
+                        <h2>Earn Record</h2>
                         <div className="tx-list">
                             {isLoadingTx ? (
                                 <p className="empty-state">Loading records...</p>
                             ) : transactions.filter(t => t.type === 'stake').length === 0 ? (
-                                <p className="empty-state">No staking records found.</p>
+                                <p className="empty-state">No earn records found.</p>
                             ) : (
                                 transactions.filter(t => t.type === 'stake').map(t => (
                                     <div className="tx-item" key={t.id}>
                                         <div className="tx-left">
-                                            <span className="tx-type">Stake Added</span>
+                                            <span className="tx-type">Earn Added</span>
                                             <span className="tx-date">{new Date(t.timestamp).toLocaleString()}</span>
                                         </div>
                                         <div className="tx-right negative">
