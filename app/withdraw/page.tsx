@@ -53,29 +53,25 @@ export default function WithdrawPage() {
             return;
         }
 
-        // Check if user is base tier and require >$30 total deposits
-        const isBasicTier = !user?.tier || user.tier.toLowerCase() === 'basic';
-        if (isBasicTier) {
-            try {
-                let totalDeposited = 0;
-                const txSnap = await getDocs(collection(db, "users", uid!, "transactions"));
-                txSnap.forEach(d => {
-                    const data = d.data();
-                    if (data.type === 'deposit_approved' || data.type === 'deposit') {
-                        totalDeposited += (data.amount || 0);
-                    }
-                });
-
-                if (totalDeposited <= 30) {
-                    alert(`Basic tier users must deposit more than $30 to withdraw. Your current total deposit is $${totalDeposited.toFixed(2)}.`);
-                    return;
+        // ALL users must have deposited at least $30 total before they can withdraw
+        try {
+            let totalDeposited = 0;
+            const txSnap = await getDocs(collection(db, "users", uid!, "transactions"));
+            txSnap.forEach(d => {
+                const data = d.data();
+                if (data.type === 'deposit_approved' || data.type === 'deposit') {
+                    totalDeposited += (data.amount || 0);
                 }
-            } catch (err: any) {
-                console.error("Failed to verify deposits:", err);
-                // Decide whether to block or allow if error occurs. Blocking is safer.
-                alert("Failed to verify deposit history. Please try again or contact support.");
+            });
+
+            if (totalDeposited < 30) {
+                alert(`⚠️ Withdrawal Locked\n\nYou must deposit at least $30 USDT before you can withdraw. This applies to all users, even those who earned referral bonuses.\n\nYour current total deposit: $${totalDeposited.toFixed(2)} USDT\nRequired: $30.00 USDT`);
                 return;
             }
+        } catch (err: any) {
+            console.error("Failed to verify deposits:", err);
+            alert("Failed to verify deposit history. Please try again or contact support.");
+            return;
         }
 
         const balance = user?.balances?.usdt || 0;
