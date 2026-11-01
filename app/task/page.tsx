@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, getDocs, updateDoc, increment, addDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function TaskPage() {
   const router = useRouter();
@@ -20,23 +20,12 @@ export default function TaskPage() {
           router.push('/login');
         }
       });
-      // Fetch total deposits
-      const fetchDeposits = async () => {
-        try {
-          let total = 0;
-          const txSnap = await getDocs(collection(db, "users", uid, "transactions"));
-          txSnap.forEach(d => {
-            const data = d.data();
-            if (data.type === 'deposit_approved' || data.type === 'deposit') {
-              total += (data.amount || 0);
-            }
-          });
-          setTotalDeposit(total);
-        } catch (e) {
-          console.error("Failed to fetch deposits", e);
-        }
-      };
-      fetchDeposits();
+      fetch(`/api/levels/status?uid=${uid}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) setTotalDeposit(Number(data.qualifyingDepositUsdt || 0));
+        })
+        .catch((e) => console.error("Failed to fetch deposits", e));
     } else {
       router.push('/login');
     }
@@ -58,28 +47,20 @@ export default function TaskPage() {
       const uid = localStorage.getItem("nexmine_uid");
       if (!uid) return;
 
-      const currentTierIndex = TIERS.indexOf(user?.tier || 'Basic');
-      const newTierIndex = TIERS.indexOf(tierName);
-
-      const updates: any = {
-        [`claimedBonuses.${tierKey}`]: true,
-        'balances.usdt': increment(bonus),
-        totalProfit: increment(bonus)
-      };
-      if (newTierIndex > currentTierIndex) {
-        updates.tier = tierName;
+      const res = await fetch('/api/levels/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, tierName }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || 'Unable to claim bonus.');
+        return;
       }
 
-      const userRef = doc(db, "users", uid);
-      await updateDoc(userRef, updates);
-
-      await addDoc(collection(userRef, "transactions"), {
-        type: 'tier_bonus',
-        amount: bonus,
-        token: 'USDT',
-        note: `Claimed ${tierName} tier bonus`,
-        timestamp: new Date().toISOString()
-      });
+      const currentTierIndex = TIERS.indexOf(user?.tier || 'Basic');
+      const newTierIndex = TIERS.indexOf(tierName);
+      if (data.qualifyingDepositUsdt != null) setTotalDeposit(Number(data.qualifyingDepositUsdt));
 
       setUser((prev: any) => ({
         ...prev,

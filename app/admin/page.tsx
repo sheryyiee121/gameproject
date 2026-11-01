@@ -13,6 +13,12 @@ export default function AdminDashboard() {
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'users' | 'withdrawals' | 'deposits'>('users');
+    const [loginError, setLoginError] = useState('');
+    const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    const [pwMessage, setPwMessage] = useState('');
+    const [pwError, setPwError] = useState('');
+    const [pwSaving, setPwSaving] = useState(false);
+    const [showPwPanel, setShowPwPanel] = useState(false);
 
     useEffect(() => {
         // Force English language on Admin Panel
@@ -27,16 +33,54 @@ export default function AdminDashboard() {
         }
     }, []);
 
-    const handleAdminLogin = (e: React.FormEvent) => {
+    const handleAdminLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
-        if (adminPass === correctPassword) {
+        setLoginError('');
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ password: adminPass }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                setLoginError(data.error || 'Invalid Admin Password');
+                return;
+            }
+            setAdminPass('');
             setIsAdminLoggedIn(true);
             fetchUsers();
             fetchWithdrawals();
             fetchDeposits();
-        } else {
-            alert("Invalid Admin Password");
+        } catch {
+            setLoginError('Login failed. Please try again.');
+        }
+    };
+
+    const handleChangeAdminPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPwError('');
+        setPwMessage('');
+        setPwSaving(true);
+        try {
+            const res = await fetch('/api/admin/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(pwForm),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                setPwError(data.error || 'Unable to change password.');
+                return;
+            }
+            setPwMessage('Password updated. Use the new password next time you log in.');
+            setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch {
+            setPwError('Unable to change password.');
+        } finally {
+            setPwSaving(false);
         }
     };
 
@@ -105,20 +149,16 @@ export default function AdminDashboard() {
         if (!window.confirm(confirmMsg)) return;
 
         try {
-            await updateDoc(doc(db, "depositRequests", deposit.id), { status: action });
-
-            if (action === 'approved') {
-                const tokenKey = deposit.coin.toLowerCase();
-                await updateDoc(doc(db, "users", deposit.uid), {
-                    [`balances.${tokenKey}`]: increment(deposit.amount)
-                });
-                await addDoc(collection(db, "users", deposit.uid, "transactions"), {
-                    type: 'deposit_approved',
-                    amount: deposit.amount,
-                    token: deposit.coin,
-                    note: 'Deposit request approved by Admin',
-                    timestamp: new Date().toISOString()
-                });
+            const res = await fetch('/api/admin/deposits/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ depositId: deposit.id, action }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                alert("Action failed: " + (data.error || 'Unknown error'));
+                return;
             }
 
             alert(action === 'approved'
@@ -129,6 +169,28 @@ export default function AdminDashboard() {
             fetchUsers();
         } catch (err: any) {
             alert("Action failed: " + err.message);
+        }
+    };
+
+    const handleDepositReverse = async (deposit: any) => {
+        if (!window.confirm(`Reverse approved deposit of ${deposit.amount} ${deposit.coin} for ${deposit.username}? This will deduct the amount from their balance and remove it from qualifying deposits.`)) return;
+        try {
+            const res = await fetch('/api/admin/deposits/reverse', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ depositId: deposit.id }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                alert("Reverse failed: " + (data.error || 'Unknown error'));
+                return;
+            }
+            alert('Deposit reversed. Qualifying deposit total has been recalculated.');
+            fetchDeposits();
+            fetchUsers();
+        } catch (err: any) {
+            alert("Reverse failed: " + err.message);
         }
     };
 
@@ -188,9 +250,11 @@ export default function AdminDashboard() {
 
             // --- 2. Log the transaction for this user ---
             await addDoc(collection(userRef, "transactions"), {
-                type: isAdding ? 'deposit' : 'withdrawal',
+                type: isAdding ? 'admin_credit' : 'admin_debit',
                 amount: amount,
                 token: token.toUpperCase(),
+                countsTowardLevel: false,
+                note: isAdding ? 'Manual admin credit (does not count toward membership deposits)' : 'Manual admin debit',
                 timestamp: new Date().toISOString()
             });
 
@@ -268,6 +332,7 @@ export default function AdminDashboard() {
                         onChange={(e) => setAdminPass(e.target.value)}
                         style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc', color: '#000' }}
                     />
+                    {loginError && <p style={{ color: '#ef4444', margin: 0 }}>{loginError}</p>}
                     <button type="submit" style={{ padding: '10px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
                         Login to Admin
                     </button>
@@ -284,11 +349,27 @@ export default function AdminDashboard() {
                     <button onClick={createMockUser} style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
                         + Create Fake User
                     </button>
+                    <button onClick={() => setShowPwPanel(!showPwPanel)} style={{ padding: '8px 16px', background: '#111827', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                        Change Password
+                    </button>
                     <button onClick={() => { fetchUsers(); fetchWithdrawals(); fetchDeposits(); }} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #ddd', borderRadius: '5px', cursor: 'pointer' }}>
                         Refresh All
                     </button>
                 </div>
             </div>
+            {showPwPanel && (
+                <form onSubmit={handleChangeAdminPassword} style={{ background: '#fff', padding: '16px', borderRadius: '10px', marginBottom: '20px', display: 'grid', gap: '10px', maxWidth: '480px' }}>
+                    <strong>Change Admin Password</strong>
+                    <input type="password" placeholder="Current password" value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} required autoComplete="current-password" style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} />
+                    <input type="password" placeholder="New password (min 8 chars, letter + number)" value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} required autoComplete="new-password" style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} />
+                    <input type="password" placeholder="Confirm new password" value={pwForm.confirmPassword} onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })} required autoComplete="new-password" style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} />
+                    {pwError && <p style={{ color: '#ef4444', margin: 0 }}>{pwError}</p>}
+                    {pwMessage && <p style={{ color: '#059669', margin: 0 }}>{pwMessage}</p>}
+                    <button type="submit" disabled={pwSaving} style={{ padding: '10px', background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700 }}>
+                        {pwSaving ? 'Saving...' : 'Update Password'}
+                    </button>
+                </form>
+            )}
 
             {/* Tabs */}
             <div style={{ display: 'flex', gap: '0', marginBottom: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden', width: 'fit-content' }}>
@@ -368,6 +449,7 @@ export default function AdminDashboard() {
                                         <th style={{ padding: '12px 8px' }}>My Invite Code</th>
                                         <th style={{ padding: '12px 8px' }}>Referred By (UID)</th>
                                         <th style={{ padding: '12px 8px' }}>Balances</th>
+                                        <th style={{ padding: '12px 8px' }}>Qualifying Deposits</th>
                                         <th style={{ padding: '12px 8px' }}>Total Profit</th>
                                         <th style={{ padding: '12px 8px' }}>Status</th>
                                         <th style={{ padding: '12px 8px' }}>Manual Adjustments (USDT)</th>
@@ -398,6 +480,9 @@ export default function AdminDashboard() {
                                                 USDT: ${u.balances?.usdt || 0} <br />
                                                 USDC: ${u.balances?.usdc || 0} <br />
                                                 BTC: ${u.balances?.btc || 0}
+                                            </td>
+                                            <td style={{ padding: '12px 8px', fontWeight: 'bold', color: '#0f766e' }}>
+                                                ${(u.qualifyingDepositUsdt || 0).toFixed(2)} USDT
                                             </td>
                                             <td style={{ padding: '12px 8px', color: '#f59e0b', fontWeight: 'bold' }}>${(u.totalProfit || 0).toFixed(4)}</td>
                                             <td style={{ padding: '12px 8px', color: u.isBlocked ? 'red' : 'green', fontWeight: 'bold' }}>
@@ -566,6 +651,7 @@ export default function AdminDashboard() {
                                                 {d.status === 'processing' && <span style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fcd34d', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>⏳ Processing</span>}
                                                 {d.status === 'approved' && <span style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #6ee7b7', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>✅ Approved</span>}
                                                 {d.status === 'rejected' && <span style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fca5a5', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>❌ Rejected</span>}
+                                                {d.status === 'reversed' && <span style={{ background: '#f8fafc', color: '#475569', border: '1px solid #cbd5e1', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>↩ Reversed</span>}
                                             </td>
                                             <td style={{ padding: '12px 10px' }}>
                                                 {d.status === 'processing' ? (
@@ -583,6 +669,13 @@ export default function AdminDashboard() {
                                                             ❌ Reject
                                                         </button>
                                                     </div>
+                                                ) : d.status === 'approved' ? (
+                                                    <button
+                                                        onClick={() => handleDepositReverse(d)}
+                                                        style={{ padding: '7px 14px', background: '#64748b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                                                    >
+                                                        Reverse
+                                                    </button>
                                                 ) : (
                                                     <span style={{ color: '#94a3b8', fontSize: '13px' }}>No action needed</span>
                                                 )}

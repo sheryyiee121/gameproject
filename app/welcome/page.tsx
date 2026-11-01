@@ -35,6 +35,21 @@ export default function WelcomePage() {
                 <h1 className="welcome-title">Welcome to <span className="highlight">Nexmine</span></h1>
                 <p className="welcome-subtitle">The leading platform for intelligent automated mining. Join our ecosystem and start maximizing your digital assets today.</p>
 
+                <div className="highlight-grid">
+                    <article>
+                        <h3>Earn / Trade</h3>
+                        <p>Lock USDT into 7, 15, or 30-day plans at the existing 1.2% daily rate.</p>
+                    </article>
+                    <article>
+                        <h3>Membership</h3>
+                        <p>Levels unlock from confirmed deposits only, never from profits or wallet balance.</p>
+                    </article>
+                    <article>
+                        <h3>Daily Yield</h3>
+                        <p>Profits are credited automatically on the backend and recorded in your history.</p>
+                    </article>
+                </div>
+
                 {/* Buttons */}
                 <div className="button-group">
                     <button
@@ -154,6 +169,28 @@ export default function WelcomePage() {
                 }
                 .btn-secondary:active {
                     transform: scale(0.98);
+                }
+                .highlight-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                    width: 100%;
+                    margin-bottom: 28px;
+                    text-align: left;
+                }
+                .highlight-grid article {
+                    background: rgba(0, 217, 255, 0.06);
+                    border: 1px solid rgba(0, 217, 255, 0.18);
+                    border-radius: 14px;
+                    padding: 14px;
+                    animation: rise 0.6s ease both;
+                }
+                .highlight-grid h3 { margin: 0 0 6px; color: #00D9FF; font-size: 15px; }
+                .highlight-grid p { margin: 0; color: #8FA3BF; font-size: 13px; line-height: 1.5; }
+                @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+                @media (min-width: 640px) {
+                    .highlight-grid { grid-template-columns: 1fr 1fr 1fr; }
+                    .welcome-title { font-size: 34px; }
                 }
             `}</style>
         </div>

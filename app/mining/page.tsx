@@ -3,7 +3,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, increment, serverTimestamp, collection, getDocs, query, orderBy, addDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { STAKING_PLANS } from '@/lib/staking';
+import { StakeCards } from '@/components/StakeCards';
 
 // Helper: get the tier bonus amount based on referrer's team size
 export function getReferralBonus(teamSize: number): number {
@@ -23,7 +25,11 @@ export default function MiningPage() {
 
     const [showStakeModal, setShowStakeModal] = useState(false);
     const [stakeInput, setStakeInput] = useState('');
+    const [selectedPlanId, setSelectedPlanId] = useState<string>(STAKING_PLANS[1].id);
     const [isStaking, setIsStaking] = useState(false);
+    const [stakeError, setStakeError] = useState('');
+    const [stakes, setStakes] = useState<any[]>([]);
+    const [stakeFilter, setStakeFilter] = useState<'active' | 'completed'>('active');
 
     const [showStakeRecordModal, setShowStakeRecordModal] = useState(false);
     const [showProfitModal, setShowProfitModal] = useState(false);
@@ -34,10 +40,26 @@ export default function MiningPage() {
         const uid = localStorage.getItem("nexmine_uid");
         if (!uid) { router.push('/login'); return; }
 
+        const loadStakes = async () => {
+            try {
+                await fetch('/api/stakes/accrue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uid }),
+                });
+                const res = await fetch(`/api/stakes/list?uid=${uid}`);
+                const data = await res.json();
+                if (data.success) setStakes(data.stakes || []);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
         getDoc(doc(db, "users", uid)).then(docSnap => {
             if (!docSnap.exists()) { router.push('/login'); return; }
             const data = docSnap.data();
             setUser(data);
+            loadStakes();
 
             // miningRate is $ per 24 hours
             const dailyRate = data.miningRate ?? 0.15;      // fallback if old account
@@ -98,14 +120,16 @@ export default function MiningPage() {
 
     const handleStake = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isStaking) return;
+        setStakeError('');
         const amt = parseFloat(stakeInput);
         if (isNaN(amt) || amt < 1) {
-            alert("Please enter a valid earn amount (min $1).");
+            setStakeError("Please enter a valid amount (min $1).");
             return;
         }
         const balance = user?.balances?.usdt || 0;
         if (amt > balance) {
-            alert(`Insufficient balance. Available: $${balance.toFixed(4)}`);
+            setStakeError(`Insufficient available balance. Available: $${balance.toFixed(4)}`);
             return;
         }
 
@@ -113,57 +137,32 @@ export default function MiningPage() {
         try {
             const uid = localStorage.getItem("nexmine_uid");
             if (!uid) return;
-            const docRef = doc(db, "users", uid);
-            const docSnap = await getDoc(docRef);
-            if (!docSnap.exists()) return;
-
-            const data = docSnap.data();
-            let startMs = Date.now();
-            if (data.miningStartedAt?.toDate) {
-                startMs = data.miningStartedAt.toDate().getTime();
-            }
-            const elapsedSec = Math.min((Date.now() - startMs) / 1000, 86400);
-            const perSec = (data.miningRate ?? 0) / 86400;
-            const actualEarned = perSec * elapsedSec;
-
-            const currentStaked = data.stakedAmount ?? 0;
-            const newStaked = currentStaked + amt;
-            const newMiningRate = newStaked * 0.012; // 1.2% daily rate
-
-            await updateDoc(docRef, {
-                'balances.usdt': increment(actualEarned - amt),
-                stakedAmount: newStaked,
-                miningRate: newMiningRate,
-                miningStartedAt: serverTimestamp(),
-                totalProfit: increment(actualEarned)
+            const requestId = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+            const res = await fetch('/api/stakes/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid, planId: selectedPlanId, amount: amt, requestId }),
             });
-
-            await addDoc(collection(docRef, "transactions"), {
-                type: 'stake',
-                amount: amt,
-                token: 'USDT',
-                timestamp: new Date().toISOString()
-            });
-
-            if (actualEarned > 0) {
-                await addDoc(collection(docRef, "transactions"), {
-                    type: 'mining_profit',
-                    amount: actualEarned,
-                    token: 'USDT',
-                    timestamp: new Date().toISOString()
-                });
+            const data = await res.json();
+            if (!data.success) {
+                setStakeError(data.error || 'Unable to start this plan.');
+                return;
             }
-
-            alert(`✅ Successfully added $${amt} to Earn!`);
+            alert(`✅ Trade started. ${amt} USDT was moved from available balance into ${STAKING_PLANS.find(p => p.id === selectedPlanId)?.name}.`);
             setShowStakeModal(false);
             setStakeInput('');
             window.location.reload();
         } catch (err: any) {
-            alert("Failed to earn: " + err.message);
+            setStakeError(err.message || 'Failed to start trade.');
         } finally {
             setIsStaking(false);
         }
     };
+
+    const activeStakes = stakes.filter(s => s.status === 'active');
+    const completedStakes = stakes.filter(s => s.status === 'completed');
+    const investedAmount = activeStakes.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+    const selectedPlan = STAKING_PLANS.find(p => p.id === selectedPlanId) || STAKING_PLANS[1];
 
     return (
         <div className="mining-root">
@@ -211,7 +210,7 @@ export default function MiningPage() {
                 {/* Stats Grid */}
                 <div className="stats-grid">
                     <div className="stat-box">
-                        <span className="lbl">Account Balance</span>
+                        <span className="lbl">Available Balance</span>
                         <div className="val-row">
                             <span className="usdt-icon">₮</span>
                             <span className="val">{user?.balances?.usdt?.toFixed(4) || '0.0000'}</span>
@@ -242,12 +241,12 @@ export default function MiningPage() {
 
                 {/* Action Grid */}
                 <div className="action-grid">
-                    <div className="action-item" onClick={() => setShowStakeModal(true)} style={{ cursor: 'pointer' }}>
+                    <button type="button" className="action-item" onClick={() => setShowStakeModal(true)}>
                         <div className="action-icon stripe-blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                         </div>
-                        <span className="action-label">Add Earn</span>
-                    </div>
+                        <span className="action-label">Earn / Trade</span>
+                    </button>
                     <div className="action-item" onClick={openStakeRecord} style={{ cursor: 'pointer' }}>
                         <div className="action-icon stripe-blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg>
@@ -281,6 +280,17 @@ export default function MiningPage() {
                     </div>
                 </div>
 
+                <section className="stakes-section">
+                    <div className="stakes-header">
+                        <h3>My Stakes</h3>
+                        <div className="filter-row">
+                            <button className={stakeFilter === 'active' ? 'on' : ''} onClick={() => setStakeFilter('active')}>Active ({activeStakes.length})</button>
+                            <button className={stakeFilter === 'completed' ? 'on' : ''} onClick={() => setStakeFilter('completed')}>Completed ({completedStakes.length})</button>
+                        </div>
+                    </div>
+                    <StakeCards stakes={stakeFilter === 'active' ? activeStakes : completedStakes} />
+                </section>
+
                 {/* Details List */}
                 <div className="details-list">
                     <div className="detail-row">
@@ -288,8 +298,8 @@ export default function MiningPage() {
                         <span className="d-val">$0.05 – $1.00 / day</span>
                     </div>
                     <div className="detail-row">
-                        <span className="d-label">Total Earned</span>
-                        <span className="d-val">${(user?.stakedAmount || 0).toFixed(2)} USDT</span>
+                        <span className="d-label">Active Investment</span>
+                        <span className="d-val">${investedAmount.toFixed(2)} USDT</span>
                     </div>
                     <div className="detail-row">
                         <span className="d-label">Your Daily Rate</span>
@@ -337,8 +347,21 @@ export default function MiningPage() {
             {showStakeModal && (
                 <div className="modal-overlay" onClick={() => setShowStakeModal(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h2>Add Earn</h2>
-                        <p>Invest USDT to start mining. Daily profit: 1.2%</p>
+                        <h2>Earn / Trade</h2>
+                        <p>Select a plan. The amount is deducted from available balance and held in the investment until maturity. Daily profit uses the existing 1.2% plan rate and is credited automatically.</p>
+                        <div className="plan-picker">
+                            {STAKING_PLANS.map(plan => (
+                                <button
+                                    type="button"
+                                    key={plan.id}
+                                    className={`plan-chip ${selectedPlanId === plan.id ? 'selected' : ''}`}
+                                    onClick={() => setSelectedPlanId(plan.id)}
+                                >
+                                    <strong>{plan.name}</strong>
+                                    <span>{plan.durationDays} days · {(plan.dailyRate * 100).toFixed(1)}% / day</span>
+                                </button>
+                            ))}
+                        </div>
                         <form onSubmit={handleStake}>
                             <input
                                 type="number"
@@ -348,10 +371,14 @@ export default function MiningPage() {
                                 min="1" step="0.5"
                                 required
                             />
+                            {stakeInput && !Number.isNaN(parseFloat(stakeInput)) && (
+                                <p>Daily profit: {(parseFloat(stakeInput) * selectedPlan.dailyRate).toFixed(4)} USDT</p>
+                            )}
+                            {stakeError && <p className="form-error">{stakeError}</p>}
                             <div className="modal-actions">
                                 <button type="button" onClick={() => setShowStakeModal(false)} className="cancel-btn">Cancel</button>
                                 <button type="submit" disabled={isStaking} className="stake-submit-btn">
-                                    {isStaking ? 'Processing...' : 'Earn'}
+                                    {isStaking ? 'Processing...' : 'Start Trade'}
                                 </button>
                             </div>
                         </form>
@@ -398,14 +425,14 @@ export default function MiningPage() {
                         <div className="tx-list">
                             {isLoadingTx ? (
                                 <p className="empty-state">Loading records...</p>
-                            ) : transactions.filter(t => ['tier_bonus', 'referral_commission', 'mining_profit'].includes(t.type)).length === 0 ? (
+                            ) : transactions.filter(t => ['tier_bonus', 'referral_commission', 'mining_profit', 'staking_profit', 'principal_return'].includes(t.type)).length === 0 ? (
                                 <p className="empty-state">No profit records found.</p>
                             ) : (
-                                transactions.filter(t => ['tier_bonus', 'referral_commission', 'mining_profit'].includes(t.type)).map(t => (
+                                transactions.filter(t => ['tier_bonus', 'referral_commission', 'mining_profit', 'staking_profit', 'principal_return'].includes(t.type)).map(t => (
                                     <div className="tx-item" key={t.id}>
                                         <div className="tx-left">
                                             <span className="tx-type">
-                                                {t.type === 'tier_bonus' ? 'Tier Bonus' : t.type === 'referral_commission' ? 'Referral Commission' : 'Mining Profit'}
+                                                {t.type === 'tier_bonus' ? 'Tier Bonus' : t.type === 'referral_commission' ? 'Referral Commission' : t.type === 'staking_profit' ? 'Daily Staking Profit' : t.type === 'principal_return' ? 'Principal Return' : 'Mining Profit'}
                                             </span>
                                             <span className="tx-date">{new Date(t.timestamp).toLocaleString()}</span>
                                         </div>
@@ -494,7 +521,7 @@ export default function MiningPage() {
 
                 /* Action grid */
                 .action-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 10px; }
-                .action-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+                .action-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; background: none; border: none; color: inherit; }
                 .action-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.08); transition: transform 0.2s; }
                 .action-item:hover .action-icon { transform: translateY(-3px); }
                 .stripe-blue { background: linear-gradient(135deg,#1e293b,#334155); }
@@ -551,6 +578,18 @@ export default function MiningPage() {
                 .tx-right.positive { color: #10b981; }
                 .tx-right.negative { color: #ef4444; }
                 .empty-state { text-align: center; color: #818894; font-size: 14px; padding: 20px 0; }
+                .stakes-section { background: #010413; border: 1px solid rgba(129,136,148,0.15); border-radius: 20px; padding: 16px; }
+                .stakes-header { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+                .stakes-header h3 { margin: 0; font-size: 16px; }
+                .filter-row { display: flex; gap: 8px; }
+                .filter-row button { background: #000717; color: #818894; border: 1px solid rgba(129,136,148,0.2); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+                .filter-row button.on { color: #fff; border-color: #0ea5e9; background: rgba(14,165,233,0.15); }
+                .plan-picker { display: grid; gap: 8px; margin-bottom: 16px; }
+                .plan-chip { text-align: left; background: #000717; border: 1px solid rgba(129,136,148,0.25); color: #fff; border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+                .plan-chip.selected { border-color: #0ea5e9; background: rgba(14,165,233,0.12); }
+                .plan-chip span { font-size: 12px; color: #818894; }
+                .form-error { color: #ef4444; font-size: 13px; margin: 0 0 12px; }
+                .empty-stakes { color: #818894; text-align: center; padding: 12px 0; }
             `}</style>
         </div>
     );

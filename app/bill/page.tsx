@@ -42,11 +42,19 @@ export default function FundFlowPage() {
     const getTxLabel = (tx: any) => {
         if (tx.description) return tx.description;
         if (tx.type === 'deposit' || tx.type === 'deposit_approved') return 'Deposit';
+        if (tx.type === 'deposit_reversed') return 'Deposit Reversed';
         if (tx.type === 'withdrawal') return 'Withdrawal';
+        if (tx.type === 'stake') return tx.note || 'Investment Started';
+        if (tx.type === 'staking_profit') return 'Daily Staking Profit';
+        if (tx.type === 'principal_return') return 'Principal Return';
         if (tx.type === 'mining') return 'Computing Power Income';
+        if (tx.type === 'mining_profit') return 'Mining Profit';
         if (tx.type === 'task') return 'Task Income';
         if (tx.type === 'bonus') return 'Basic Income Reward';
+        if (tx.type === 'admin_credit') return 'Admin Credit';
+        if (tx.type === 'admin_debit') return 'Admin Debit';
         if (tx.type === 'referral_commission') return 'Referral Commission';
+        if (tx.type === 'tier_bonus') return 'Tier Bonus';
         return 'System Transaction';
     };
 

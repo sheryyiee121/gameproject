@@ -3,68 +3,42 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
-
-const LEVELS = [
-    { name: 'Basic', minDeposit: 0, bonus: 0, color: '#64748b', emoji: '⭐' },
-    { name: 'Bronze', minDeposit: 50, bonus: 5, color: '#cd7f32', emoji: '🥉' },
-    { name: 'Silver', minDeposit: 100, bonus: 10, color: '#94a3b8', emoji: '🥈' },
-    { name: 'Gold', minDeposit: 300, bonus: 25, color: '#ffd700', emoji: '🥇' },
-    { name: 'Platinum', minDeposit: 600, bonus: 50, color: '#e2e8f0', emoji: '💎' },
-    { name: 'Diamond', minDeposit: 1500, bonus: 250, color: '#38bdf8', emoji: '💠' },
-    { name: 'VIP', minDeposit: 5000, bonus: 500, color: '#a855f7', emoji: '👑' },
-];
-
-function getUserLevel(totalDeposited: number) {
-    let current = LEVELS[0];
-    for (const lvl of LEVELS) {
-        if (totalDeposited >= lvl.minDeposit) current = lvl;
-        else break;
-    }
-    return current;
-}
+import { doc, getDoc } from 'firebase/firestore';
+import { LEVELS, getUserLevel } from '@/lib/levels';
 
 export default function MembershipPage() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
     const [totalDeposited, setTotalDeposited] = useState(0);
+    const [walletBalance, setWalletBalance] = useState(0);
 
     useEffect(() => {
         const uid = localStorage.getItem('nexmine_uid');
-        if (uid) {
-            getDoc(doc(db, 'users', uid)).then(snap => {
-                if (snap.exists()) setUser(snap.data());
-                else router.push('/login');
-            });
-
-            // dynamically calculate total deposited
-            const fetchDeposits = async () => {
-                try {
-                    let total = 0;
-                    const txSnap = await getDocs(collection(db, 'users', uid, 'transactions'));
-                    txSnap.forEach(d => {
-                        const data = d.data();
-                        if (data.type === 'deposit_approved' || data.type === 'deposit') {
-                            total += (data.amount || 0);
-                        }
-                    });
-                    setTotalDeposited(total);
-                } catch (e) {
-                    console.error("Failed to load deposits", e);
-                }
-            };
-            fetchDeposits();
-
-        } else {
+        if (!uid) {
             router.push('/login');
+            return;
         }
+
+        getDoc(doc(db, 'users', uid)).then(snap => {
+            if (snap.exists()) {
+                const data = snap.data();
+                setWalletBalance(Number(data.balances?.usdt || 0));
+            } else {
+                router.push('/login');
+            }
+        });
+
+        fetch(`/api/levels/status?uid=${uid}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) setTotalDeposited(Number(data.qualifyingDepositUsdt || 0));
+            })
+            .catch((e) => console.error('Failed to load deposits', e));
     }, [router]);
 
     const currentLevel = getUserLevel(totalDeposited);
 
     return (
         <div className="mem-root">
-            {/* Header */}
             <header className="top-bar">
                 <button className="back-btn" onClick={() => router.back()} aria-label="Back">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
@@ -73,7 +47,6 @@ export default function MembershipPage() {
                 <div style={{ width: 42 }} />
             </header>
 
-            {/* Current Level Banner */}
             <div className="current-banner" style={{ borderColor: currentLevel.color }}>
                 <div className="banner-left">
                     <span className="banner-emoji">{currentLevel.emoji}</span>
@@ -83,46 +56,46 @@ export default function MembershipPage() {
                     </div>
                 </div>
                 <div className="banner-right">
-                    <p className="banner-dep-lbl">Total Deposited</p>
+                    <p className="banner-dep-lbl">Qualifying Deposits</p>
                     <p className="banner-dep-val">{totalDeposited.toFixed(2)} USDT</p>
+                    <p className="banner-note">Wallet: {walletBalance.toFixed(2)} USDT (does not unlock levels)</p>
                 </div>
             </div>
 
-            {/* Level Cards */}
             <main className="level-list">
                 {LEVELS.map((lvl, idx) => {
-                    const isCurrentOrBelowLevel = totalDeposited >= lvl.minDeposit;
+                    const isUnlocked = totalDeposited >= lvl.minDeposit;
                     const isCurrentLevel = lvl.name === currentLevel.name;
                     const nextMin = LEVELS[idx + 1]?.minDeposit ?? null;
-                    const progress = nextMin
-                        ? Math.min(100, ((totalDeposited - lvl.minDeposit) / (nextMin - lvl.minDeposit)) * 100)
-                        : 100;
+                    const progress = isUnlocked
+                        ? (nextMin ? Math.min(100, ((totalDeposited - lvl.minDeposit) / (nextMin - lvl.minDeposit)) * 100) : 100)
+                        : Math.min(100, (totalDeposited / Math.max(lvl.minDeposit, 1)) * 100);
 
                     return (
-                        <div key={lvl.name} className={`upgrade-card ${isCurrentLevel ? 'active-card' : ''}`} style={isCurrentLevel ? { borderColor: lvl.color } : {}}>
-                            {/* Ticket */}
+                        <div key={lvl.name} className={`upgrade-card ${isCurrentLevel ? 'active-card' : ''} ${isUnlocked ? '' : 'locked-card'}`} style={isCurrentLevel ? { borderColor: lvl.color } : {}}>
                             <div className="ticket" style={{ background: `${lvl.color}22`, borderColor: lvl.color }}>
                                 <span className="t-amt" style={{ color: lvl.color }}>+{lvl.bonus}</span>
                                 <span className="t-lbl" style={{ color: lvl.color }}>USDT{'\n'}Bonus</span>
                             </div>
-
-                            {/* Info */}
                             <div className="card-info">
                                 <div className="card-title-row">
                                     <h3 className="card-title">{lvl.emoji} {lvl.name} Level</h3>
                                     {isCurrentLevel && <span className="current-badge">YOUR LEVEL</span>}
+                                    {!isUnlocked && <span className="lock-badge">Locked</span>}
                                 </div>
                                 <p className="card-desc">
-                                    Requires {lvl.minDeposit} USDT deposit &nbsp;·&nbsp; Get +{lvl.bonus} USDT bonus
+                                    Requires {lvl.minDeposit} USDT confirmed deposit · Get +{lvl.bonus} USDT bonus
                                 </p>
                                 <div className="progress-bar">
-                                    <div className="progress-fill" style={{ width: `${isCurrentOrBelowLevel ? progress : 0}%`, background: lvl.color }} />
+                                    <div className="progress-fill" style={{ width: `${progress}%`, background: lvl.color }} />
                                 </div>
                                 <div className="card-bottom">
-                                    <span className="amount-text" style={{ color: lvl.color }}>{totalDeposited.toFixed(2)} USDT</span>
-                                    {isCurrentOrBelowLevel
+                                    <span className="amount-text" style={{ color: lvl.color }}>
+                                        {totalDeposited.toFixed(2)} / {lvl.minDeposit} USDT
+                                    </span>
+                                    {isUnlocked
                                         ? <span className="btn-claim received">✓ Unlocked</span>
-                                        : <span className="btn-claim locked">Need {lvl.minDeposit} USDT</span>
+                                        : <span className="btn-claim locked">Need {(lvl.minDeposit - totalDeposited).toFixed(2)} more</span>
                                     }
                                 </div>
                             </div>
@@ -156,9 +129,7 @@ export default function MembershipPage() {
           display: flex; align-items: center; justify-content: center;
           cursor: pointer;
         }
-        .page-title {
-          font-size: 20px; font-weight: 800; color: #fff; margin: 0;
-        }
+        .page-title { font-size: 20px; font-weight: 800; color: #fff; margin: 0; }
         .current-banner {
           margin: 20px 20px 0;
           background: #fff;
@@ -168,6 +139,7 @@ export default function MembershipPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 16px;
           box-shadow: 0 6px 20px rgba(0,0,0,0.04);
         }
         .banner-left { display: flex; align-items: center; gap: 14px; }
@@ -177,13 +149,8 @@ export default function MembershipPage() {
         .banner-right { text-align: right; }
         .banner-dep-lbl { font-size: 11px; color: #64748b; margin: 0; font-weight: 600; }
         .banner-dep-val { font-size: 18px; font-weight: 900; color: #0f172a; margin: 0; }
-
-        .level-list {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-          padding: 20px;
-        }
+        .banner-note { font-size: 11px; color: #94a3b8; margin: 6px 0 0; max-width: 220px; }
+        .level-list { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
         .upgrade-card {
           background: #ffffff;
           border: 1px solid #e2e8f0;
@@ -194,10 +161,8 @@ export default function MembershipPage() {
           align-items: center;
           box-shadow: 0 4px 15px rgba(0,0,0,0.02);
         }
-        .active-card {
-          border-width: 2px;
-          box-shadow: 0 8px 25px rgba(0,0,0,0.07);
-        }
+        .locked-card { opacity: 0.78; }
+        .active-card { border-width: 2px; box-shadow: 0 8px 25px rgba(0,0,0,0.07); }
         .ticket {
           width: 56px; height: 68px;
           border: 2px solid;
@@ -208,26 +173,27 @@ export default function MembershipPage() {
         }
         .t-amt { font-size: 18px; font-weight: 900; line-height: 1; }
         .t-lbl { font-size: 9px; font-weight: 800; text-align: center; margin-top: 3px; white-space: pre-line; line-height: 1.2; }
-
         .card-info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-        .card-title-row { display: flex; align-items: center; gap: 8px; }
+        .card-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .card-title { font-size: 15px; font-weight: 800; margin: 0; color: #0f172a; }
-        .current-badge {
+        .current-badge, .lock-badge {
           font-size: 9px; font-weight: 800;
-          background: linear-gradient(135deg, #0ea5e9, #0284c7);
-          color: #fff; padding: 2px 8px; border-radius: 20px;
+          padding: 2px 8px; border-radius: 20px;
         }
+        .current-badge { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; }
+        .lock-badge { background: #f1f5f9; color: #64748b; }
         .card-desc { font-size: 11px; color: #64748b; font-weight: 500; margin: 0; }
         .progress-bar { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; margin-bottom: 2px; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
-        .card-bottom { display: flex; justify-content: space-between; align-items: center; }
+        .card-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
         .amount-text { font-size: 12px; font-weight: 700; }
-        .btn-claim {
-          padding: 5px 12px; border-radius: 12px;
-          font-size: 10px; font-weight: 800; border: none;
-        }
+        .btn-claim { padding: 5px 12px; border-radius: 12px; font-size: 10px; font-weight: 800; border: none; }
         .btn-claim.received { background: transparent; border: 1px solid #cbd5e1; color: #64748b; }
         .btn-claim.locked { background: #f1f5f9; color: #94a3b8; }
+        @media (max-width: 640px) {
+          .current-banner { flex-direction: column; align-items: flex-start; }
+          .banner-right { text-align: left; }
+        }
       `}</style>
         </div>
     );

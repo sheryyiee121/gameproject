@@ -10,6 +10,8 @@ export default function AssetPage() {
   const [user, setUser] = useState<any>(null);
 
   const [history, setHistory] = useState<any[]>([]);
+  const [investedAmount, setInvestedAmount] = useState(0);
+  const [activeStakes, setActiveStakes] = useState<any[]>([]);
 
   useEffect(() => {
     const uid = localStorage.getItem("nexmine_uid");
@@ -47,6 +49,12 @@ export default function AssetPage() {
       };
 
       fetchHistory();
+      fetch(`/api/stakes/list?uid=${uid}`).then(r => r.json()).then(d => {
+        if (d.success) {
+          setInvestedAmount(Number(d.invested || 0));
+          setActiveStakes(d.active || []);
+        }
+      }).catch(() => {});
     }
   }, []);
 
@@ -78,7 +86,7 @@ export default function AssetPage() {
           </div>
 
           <div className="card-main-val">
-            <span className="amount">{user?.balances?.usdt?.toFixed(4) || "0.0000"}</span>
+            <span className="amount">{(Number(user?.balances?.usdt || 0) + investedAmount).toFixed(4)}</span>
             <span className="currency">USDT</span>
           </div>
 
@@ -97,8 +105,8 @@ export default function AssetPage() {
               <span className="box-val">${user?.balances?.usdt?.toFixed(4) || "0"}</span>
             </div>
             <div className="inner-box">
-              <span className="box-title">Total USDCs</span>
-              <span className="box-val">${user?.balances?.usdc?.toFixed(4) || "0"}</span>
+              <span className="box-title">In Staking</span>
+              <span className="box-val">${investedAmount.toFixed(4)}</span>
             </div>
           </div>
         </div>
@@ -138,6 +146,23 @@ export default function AssetPage() {
             <span className="action-label">Bill</span>
           </div>
         </div>
+
+        {activeStakes.length > 0 && (
+          <div className="asset-list-card" style={{ marginBottom: 16, padding: 16 }}>
+            <h2 className="list-title" style={{ margin: '0 0 8px' }}>Active Investments</h2>
+            {activeStakes.map(s => (
+              <div key={s.id} className="asset-row">
+                <div className="asset-left">
+                  <span className="coin-name">{s.planName}</span>
+                </div>
+                <div className="asset-right">
+                  <span className="coin-bal">{Number(s.amount).toFixed(2)} USDT</span>
+                  <span className="coin-usd">{s.remainingDays} days left · +{Number(s.dailyProfit).toFixed(4)}/day</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Asset List / History */}
         <div className="asset-list-card">

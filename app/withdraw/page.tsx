@@ -53,19 +53,14 @@ export default function WithdrawPage() {
             return;
         }
 
-        // ALL users must have deposited at least $30 total before they can withdraw
+        // ALL users must have deposited at least $30 confirmed USDT before they can withdraw
         try {
-            let totalDeposited = 0;
-            const txSnap = await getDocs(collection(db, "users", uid!, "transactions"));
-            txSnap.forEach(d => {
-                const data = d.data();
-                if (data.type === 'deposit_approved' || data.type === 'deposit') {
-                    totalDeposited += (data.amount || 0);
-                }
-            });
+            const levelRes = await fetch(`/api/levels/status?uid=${uid}`);
+            const levelData = await levelRes.json();
+            const totalDeposited = Number(levelData.qualifyingDepositUsdt || 0);
 
-            if (totalDeposited < 30) {
-                alert(`⚠️ Withdrawal Locked\n\nYou must deposit at least $30 USDT before you can withdraw. This applies to all users, even those who earned referral bonuses.\n\nYour current total deposit: $${totalDeposited.toFixed(2)} USDT\nRequired: $30.00 USDT`);
+            if (!levelData.success || totalDeposited < 30) {
+                alert(`⚠️ Withdrawal Locked\n\nYou must deposit at least $30 USDT before you can withdraw. This applies to all users, even those who earned referral bonuses.\n\nYour current qualifying deposit: $${totalDeposited.toFixed(2)} USDT\nRequired: $30.00 USDT`);
                 return;
             }
         } catch (err: any) {

@@ -4,12 +4,18 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { STAKING_PLANS } from '@/lib/staking';
+import { LEVELS } from '@/lib/levels';
+import { StakeCards } from '@/components/StakeCards';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [showBonus, setShowBonus] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
+  const [qualifyingDeposit, setQualifyingDeposit] = useState(0);
+  const [activeStakes, setActiveStakes] = useState<any[]>([]);
+  const [investedAmount, setInvestedAmount] = useState(0);
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -48,6 +54,21 @@ export default function DashboardPage() {
         } else {
           router.push('/login');
         }
+      });
+      fetch(`/api/levels/status?uid=${uid}`).then(r => r.json()).then(d => {
+        if (d.success) setQualifyingDeposit(Number(d.qualifyingDepositUsdt || 0));
+      }).catch(() => {});
+      fetch('/api/stakes/accrue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid }),
+      }).finally(() => {
+        fetch(`/api/stakes/list?uid=${uid}`).then(r => r.json()).then(d => {
+          if (d.success) {
+            setActiveStakes(d.active || []);
+            setInvestedAmount(Number(d.invested || 0));
+          }
+        }).catch(() => {});
       });
     } else {
       router.push('/login');
@@ -114,31 +135,18 @@ export default function DashboardPage() {
       {/* Hero Section */}
       <main className="main-content">
         <div className="mining-bonus">
-          <p className="bonus-label">Free Mining Bonus</p>
+          <p className="bonus-label">Portfolio Overview</p>
           <div className="bonus-amount-row">
-            <span className="bonus-amount">0.0063</span>
-            <span className="bonus-currency">USDT/Hour</span>
-            <span className="trend-icons">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#00d084"><path d="M12 4l-8 8h16z" /></svg>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff4d4f"><path d="M12 20l8-8H4z" /></svg>
-            </span>
+            <span className="bonus-amount">{(Number(user?.balances?.usdt || 0) + investedAmount).toFixed(2)}</span>
+            <span className="bonus-currency">USDT</span>
           </div>
+          <p className="hero-caption">Available {Number(user?.balances?.usdt || 0).toFixed(2)} · Invested {investedAmount.toFixed(2)}</p>
         </div>
 
         <div className="center-graphic">
-          <h2 style={{
-            color: '#fff',
-            fontSize: '28px',
-            textAlign: 'center',
-            fontWeight: '800',
-            margin: '60px 0',
-            letterSpacing: '-0.5px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #94a3b8 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Nexmine is bringing rewards
-          </h2>
+          <h2 className="hero-title">Intelligent staking built for daily USDT yield</h2>
+          <p className="hero-sub">Deposit, unlock membership levels, and start an Earn / Trade plan with automatic daily profit.</p>
+          <button className="hero-cta" onClick={() => router.push('/mining')}>Earn / Trade</button>
         </div>
 
         <div className="stats-row">
@@ -214,6 +222,47 @@ export default function DashboardPage() {
             <span className="action-label">Operation Tutorial</span>
           </div>
         </div>
+
+        <section className="home-section">
+          <div className="section-head">
+            <h3>Investment Plans</h3>
+            <button onClick={() => router.push('/mining')}>View all</button>
+          </div>
+          <div className="plans-grid">
+            {STAKING_PLANS.map((plan) => (
+              <article key={plan.id} className="plan-card" onClick={() => router.push('/mining')}>
+                <span className="plan-kicker">Earn / Trade</span>
+                <h4>{plan.name}</h4>
+                <p>{plan.durationDays} days · {(plan.dailyRate * 100).toFixed(1)}% daily</p>
+                <button type="button">Start Trade</button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="home-section">
+          <div className="section-head">
+            <h3>Membership Levels</h3>
+            <button onClick={() => router.push('/membership')}>Progress</button>
+          </div>
+          <p className="level-note">Unlocks from confirmed USDT deposits only — not wallet balance or profits. Qualifying: {qualifyingDeposit.toFixed(2)} USDT</p>
+          <div className="levels-strip">
+            {LEVELS.map((lvl) => (
+              <div key={lvl.name} className={`level-chip ${qualifyingDeposit >= lvl.minDeposit ? 'unlocked' : 'locked'}`}>
+                <span>{lvl.emoji} {lvl.name}</span>
+                <small>{lvl.minDeposit} USDT</small>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="home-section">
+          <div className="section-head">
+            <h3>Active Investments</h3>
+            <button onClick={() => router.push('/mining')}>My Stakes</button>
+          </div>
+          <StakeCards stakes={activeStakes.slice(0, 2)} />
+        </section>
 
         {/* Feature Cards Grid (Bonus Center & GameFi) */}
         <div className="feature-cards-grid">
@@ -464,8 +513,68 @@ export default function DashboardPage() {
         .center-graphic {
           margin: 10px 0 30px;
           display: flex;
+          flex-direction: column;
           justify-content: center;
           align-items: center;
+          text-align: center;
+          gap: 12px;
+        }
+        .hero-title {
+          color: #fff;
+          font-size: clamp(22px, 5vw, 32px);
+          font-weight: 800;
+          margin: 12px 0 0;
+          letter-spacing: -0.5px;
+          max-width: 640px;
+        }
+        .hero-sub, .hero-caption {
+          color: #818894;
+          margin: 0;
+          font-size: 14px;
+          max-width: 520px;
+        }
+        .hero-cta, .plan-card button {
+          background: linear-gradient(135deg, #0ea5e9, #0284c7);
+          color: #fff;
+          border: none;
+          border-radius: 999px;
+          padding: 12px 22px;
+          font-weight: 800;
+          cursor: pointer;
+          box-shadow: 0 8px 25px rgba(14,165,233,0.35);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hero-cta:hover, .plan-card:hover { transform: translateY(-2px); }
+        .home-section { display: flex; flex-direction: column; gap: 12px; }
+        .section-head { display: flex; justify-content: space-between; align-items: center; }
+        .section-head h3 { margin: 0; font-size: 16px; }
+        .section-head button { background: transparent; border: none; color: #0ea5e9; font-weight: 700; cursor: pointer; }
+        .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .plan-card {
+          background: linear-gradient(180deg, #0f1c32, #061023);
+          border: 1px solid rgba(56,189,248,0.2);
+          border-radius: 16px;
+          padding: 16px;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          min-height: 150px;
+          animation: riseIn 0.5s ease both;
+        }
+        .plan-kicker { font-size: 11px; color: #38bdf8; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; }
+        .plan-card h4 { margin: 0; font-size: 16px; }
+        .plan-card p { margin: 0; color: #818894; font-size: 13px; flex: 1; }
+        .level-note { margin: 0; color: #818894; font-size: 13px; }
+        .levels-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+        .level-chip { background: #000717; border: 1px solid rgba(129,136,148,0.2); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .level-chip.unlocked { border-color: rgba(16,185,129,0.4); }
+        .level-chip.locked { opacity: 0.65; }
+        .level-chip small { color: #818894; }
+        .empty-stakes { color: #818894; text-align: center; }
+        @keyframes riseIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 720px) {
+          .plans-grid { grid-template-columns: 1fr; }
         }
         .shield-blob {
           width: 170px;
@@ -571,6 +680,7 @@ export default function DashboardPage() {
           align-items: center;
           text-align: center;
           gap: 10px;
+          cursor: pointer;
         }
         .action-icon-wrapper {
           width: 56px;
